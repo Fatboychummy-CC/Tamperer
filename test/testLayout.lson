@@ -1,0 +1,95 @@
+{
+  name = "Test Base",
+  info = "This is a test page.",
+  bigInfo = "This is simply a test page for Simplify Shop",
+  settings = {
+    {
+      "shop.setting1",
+      "Shop Set 1",
+      "string",
+      "Just a string setting for this thing."
+    },
+    {
+      "shop.setting2",
+      "Shop Set 2",
+      "number",
+      "Just a number setting for this thing."
+    },
+    {
+      "shop.setting3",
+      "Shop Set 3",
+      "color",
+      "Just a color setting for this thing."
+    },
+    {
+      "shop.setting4",
+      "Shop Set 4",
+      "boolean",
+      "Just a boolean setting for this thing."
+    },
+  },
+  subPages = {
+    {
+      name = "Sublist 1",
+      info = "Subpage listing 1",
+      bigInfo = "The first listing for a subpage.",
+      settings = {
+        {
+          "shop.sub1.setting1",
+          "Shop Set 1",
+          "string",
+          "Just a string setting for this thing."
+        },
+        {
+          "shop.sub1.setting2",
+          "Shop Set 2",
+          "number",
+          "Just a number setting for this thing."
+        },
+        {
+          "shop.sub1.setting3",
+          "Shop Set 3",
+          "color",
+          "Just a color setting for this thing."
+        },
+        {
+          "shop.sub1.setting4",
+          "Shop Set 4",
+          "boolean",
+          "Just a boolean setting for this thing."
+        },
+      }
+    },
+    {
+      name = "Sublist 2",
+      info = "Subpage listing 2",
+      bigInfo = "The second listing for a subpage.",
+      settings = {
+        {
+          "shop.sub2.setting1",
+          "Shop Set 1",
+          "string",
+          "Just a string setting for this thing."
+        },
+        {
+          "shop.sub2.setting2",
+          "Shop Set 2",
+          "number",
+          "Just a number setting for this thing."
+        },
+        {
+          "shop.sub2.setting3",
+          "Shop Set 3",
+          "color",
+          "Just a color setting for this thing."
+        },
+        {
+          "shop.sub2.setting4",
+          "Shop Set 4",
+          "boolean",
+          "Just a boolean setting for this thing."
+        },
+      }
+    }
+  }
+}
