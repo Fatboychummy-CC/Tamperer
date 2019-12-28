@@ -52,7 +52,7 @@ local function checkPage(page)
       clen(cur.info, 25, "page.selections[" .. tostring(i) .. "].info", 3)
 
       cerr(cur.bigInfo, "string", "Page " .. page.name .. ", selection " .. tostring(i) .. " is missing entry 'bigInfo'.", 3)
-      clen(cur.biginfo, defaults.turtleX * 3, "page.selections[" .. tostring(i) .. "].bigInfo", 3)
+      clen(cur.bigInfo, defaults.turtleX * 3, "page.selections[" .. tostring(i) .. "].bigInfo", 3)
     end
   end
 
