@@ -32,12 +32,12 @@ local function checkPage(page)
 
   cerr(page.colors or page.colours, "table", "Page " .. page.name .. " is missing colors/colours table.", 3)
   cerr(page.colors.bg or page.colours.bg, "table", "Page " .. page.name .. " is missing bg color/colour table.", 3)
-  local exp = {"main", "highlight"}
+  local exp = {"main"}
   for i = 1, #exp do
     cerr(page.colors.bg[exp[i]] or page.colours.bg[exp[i]], "string", "Page " .. page.name .. " is missing bg color/colour entry" .. exp[i] .. ".", 3)
   end
   cerr(page.colors.fg or page.colours.fg, "table", "Page " .. page.name .. " is missing fg color/colour table.", 3)
-  exp = {"main", "input", "highlight", "info", "title"}
+  exp = {"main", "input", "unhighlight", "highlight", "info", "title"}
   for i = 1, #exp do
     cerr(page.colors.fg[exp[i]] or page.colours.fg[exp[i]], "string", "Page " .. page.name .. " is missing fg color/colour entry" .. exp[i] .. ".", 3)
   end
