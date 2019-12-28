@@ -10,7 +10,7 @@
       main = "white",
       input = "yellow",
       highlight = "white",
-      unhighlight = "gray"
+      unhighlight = "gray",
       info = "lightGray",
       title = "yellow"
     }
