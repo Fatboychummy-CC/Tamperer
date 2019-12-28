@@ -5,16 +5,17 @@
   colors = {
     bg = {
       main = "black",
-      highlight = "lightGray",
+      highlight = "gray",
     },
     fg = {
       main = "white",
       input = "yellow",
       highlight = "white",
-      info = "gray",
+      unhighlight = "gray"
+      info = "lightGray",
       title = "yellow"
     }
-  }
+  },
   selections = {
     {
       title = "Select 1",
@@ -26,7 +27,7 @@
       info = "Second selection",
       bigInfo = "Select the second thing and return 2"
     }
-  }
+  },
   settings = {
     {
       setting = "shop.setting1",
