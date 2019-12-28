@@ -15,7 +15,7 @@ io.write("> ")
 
 -- get user input
 local inp = tonumber(io.read())
-if not inp or inp < 1 or inp > #layouts or inp % 1 ~= 0 then
+if type(inp) ~= "number" or inp < 1 or inp > #layouts or inp % 1 ~= 0 then
   error("Nah dawg ur a rart")
 end
 
