@@ -107,6 +107,12 @@ local function iter(obj, i)
   -- return a selection
   return 1, obj.selections[i]
 end
+
+-- return the size of the objects selections/settings/subPages together
+local function size(obj)
+  return #obj.selections + #obj.settings + #obj.subPages
+end
+
 -- display the page
 local function display(obj)
   -- DEVNOTE: colors "push" themselves downstream
