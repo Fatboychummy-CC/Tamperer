@@ -4,40 +4,40 @@
   bigInfo = "This is simply a test page for Simplify Shop",
   selections = {
     {
-      "Select 1",
-      "First selection",
-      "Select the first thing and return 1"
+      title = "Select 1",
+      info = "First selection",
+      bigInfo = "Select the first thing and return 1"
     },
     {
-      "Select 2",
-      "Second selection",
-      "Select the second thing and return 2"
+      title = "Select 2",
+      info = "Second selection",
+      bigInfo = "Select the second thing and return 2"
     }
   }
   settings = {
     {
-      "shop.setting1",
-      "Shop Set 1",
-      "string",
-      "Just a string setting for this thing."
+      setting = "shop.setting1",
+      title = "Shop Set 1",
+      tp = "string",
+      bigInfo = "Just a string setting for this thing."
     },
     {
-      "shop.setting2",
-      "Shop Set 2",
-      "number",
-      "Just a number setting for this thing."
+      setting = "shop.setting2",
+      title = "Shop Set 2",
+      tp = "number",
+      bigInfo = "Just a number setting for this thing."
     },
     {
-      "shop.setting3",
-      "Shop Set 3",
-      "color",
-      "Just a color setting for this thing."
+      setting = "shop.setting3",
+      title = "Shop Set 3",
+      tp = "color",
+      bigInfo = "Just a color setting for this thing."
     },
     {
-      "shop.setting4",
-      "Shop Set 4",
-      "boolean",
-      "Just a boolean setting for this thing."
+      setting = "shop.setting4",
+      title = "Shop Set 4",
+      tp = "boolean",
+      bigInfo = "Just a boolean setting for this thing."
     },
   },
   subPages = {
@@ -47,28 +47,28 @@
       bigInfo = "The first listing for a subpage.",
       settings = {
         {
-          "shop.sub1.setting1",
-          "Shop Set 1",
-          "string",
-          "Just a string setting for this thing."
+          setting = "shop.sub1.setting1",
+          title = "Shop Set 1",
+          tp = "string",
+          bigInfo = "Just a string setting for this thing."
         },
         {
-          "shop.sub1.setting2",
-          "Shop Set 2",
-          "number",
-          "Just a number setting for this thing."
+          setting = "shop.sub1.setting2",
+          title = "Shop Set 2",
+          tp = "number",
+          bigInfo = "Just a number setting for this thing."
         },
         {
-          "shop.sub1.setting3",
-          "Shop Set 3",
-          "color",
-          "Just a color setting for this thing."
+          setting = "shop.sub1.setting3",
+          title = "Shop Set 3",
+          tp = "color",
+          bigInfo = "Just a color setting for this thing."
         },
         {
-          "shop.sub1.setting4",
-          "Shop Set 4",
-          "boolean",
-          "Just a boolean setting for this thing."
+          setting = "shop.sub1.setting4",
+          title = "Shop Set 4",
+          tp = "boolean",
+          bigInfo = "Just a boolean setting for this thing."
         },
       }
     },
@@ -78,28 +78,28 @@
       bigInfo = "The second listing for a subpage.",
       settings = {
         {
-          "shop.sub2.setting1",
-          "Shop Set 1",
-          "string",
-          "Just a string setting for this thing."
+          setting = "shop.sub2.setting1",
+          title = "Shop Set 1",
+          tp = "string",
+          bigInfo = "Just a string setting for this thing."
         },
         {
-          "shop.sub2.setting2",
-          "Shop Set 2",
-          "number",
-          "Just a number setting for this thing."
+          setting = "shop.sub2.setting2",
+          title = "Shop Set 2",
+          tp = "number",
+          bigInfo = "Just a number setting for this thing."
         },
         {
-          "shop.sub2.setting3",
-          "Shop Set 3",
-          "color",
-          "Just a color setting for this thing."
+          setting = "shop.sub2.setting3",
+          title = "Shop Set 3",
+          tp = "color",
+          bigInfo = "Just a color setting for this thing."
         },
         {
-          "shop.sub2.setting4",
-          "Shop Set 4",
-          "boolean",
-          "Just a boolean setting for this thing."
+          setting = "shop.sub2.setting4",
+          title = "Shop Set 4",
+          tp = "boolean",
+          bigInfo = "Just a boolean setting for this thing."
         },
       }
     }
