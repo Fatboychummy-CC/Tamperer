@@ -83,7 +83,8 @@
           tp = "boolean",
           bigInfo = "Just a boolean setting for this thing."
         },
-      }
+      },
+      final = "Go back."
     },
     {
       name = "Sublist 2",
@@ -114,7 +115,9 @@
           tp = "boolean",
           bigInfo = "Just a boolean setting for this thing."
         },
-      }
+      },
+      final = "Go back."
     }
   }
+  final = "Exit"
 }
