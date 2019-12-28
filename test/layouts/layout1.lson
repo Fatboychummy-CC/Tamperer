@@ -2,6 +2,19 @@
   name = "Test Base",
   info = "This is a test page.",
   bigInfo = "This is simply a test page for Simplify Shop",
+  colors = {
+    bg = {
+      main = "black",
+      highlight = "lightGray",
+    },
+    fg = {
+      main = "white",
+      input = "yellow",
+      highlight = "white",
+      info = "gray",
+      title = "yellow"
+    }
+  }
   selections = {
     {
       title = "Select 1",
