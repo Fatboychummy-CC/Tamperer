@@ -2,6 +2,18 @@
   name = "Test Base",
   info = "This is a test page.",
   bigInfo = "This is simply a test page for Simplify Shop",
+  selections = {
+    {
+      "Select 1",
+      "First selection",
+      "Select the first thing and return 1"
+    },
+    {
+      "Select 2",
+      "Second selection",
+      "Select the second thing and return 2"
+    }
+  }
   settings = {
     {
       "shop.setting1",
