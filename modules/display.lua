@@ -116,7 +116,129 @@ end
 -- display the page
 local function display(obj)
   -- DEVNOTE: colors "push" themselves downstream
+
+  local sel = 1
+  local pointer = 1
+  local pStart = 1
+  local over = {}
+
+  -- check that the page is OK
   checkPage(obj)
+
+  while true do
+    -- clear
+    term.setBackgroundColor(colors[obj.colors.bg.main] or colours[obj.colours.bg.main])
+    term.setTextColor(colors[obj.colors.fg.title] or colours[obj.colours.fg.title])
+    term.clear()
+
+    -- display the page title
+    term.setCursorPos(1, 1)
+    io.write(obj.name)
+
+    -- display the page info
+    term.setCursorPos(1, 2)
+    term.setTextColor(colors[obj.colors.fg.info] or colours[obj.colours.fg.info])
+    io.write(obj.info)
+
+    -- display the four items.
+    for i = 0, 3 do
+      local ctype, cur = iter(obj, pStart + i)
+      term.setCursorPos(2, 5 + i)
+
+      -- discriminate by type
+      if ctype == 1 then
+        -- selection
+        term.setTextColor(colors[obj.colors.fg.main] or colours[obj.colours.fg.main])
+        io.write(cur.title)
+
+        term.setCursorPos(15, 5 + i)
+        term.setTextColor(colors[obj.colors.fg.unhighlight] or colours[obj.colours.fg.unhighlight])
+        io.write(cur.info)
+      elseif ctype == 2 then
+        -- setting changer
+        local set = settings.get(cur.setting)
+        if type(set) == "string" and string.len(set) > 25 then
+          set = set:sub(1, 22)
+          set = set .. "..."
+        end
+
+        term.setTextColor(colors[obj.colors.fg.main] or colours[obj.colours.fg.main])
+        io.write(cur.title)
+
+        term.setCursorPos(15, 5 + i)
+        term.setTextColor(colors[obj.colors.fg.unhighlight] or colours[obj.colours.fg.unhighlight])
+        if cur.tp == "string" or cur.tp == "number" then
+          io.write(set or "Error: empty")
+        else
+          io.write("Unsupported type.")
+        end
+      elseif ctype == 3 then
+        -- subpage selection
+        io.write("Not yet supported.")
+      end
+    end
+
+    -- get the selected item
+    local seltp, selected = iter(obj, sel)
+
+    -- print the info of the selected item
+    term.setTextColor(colors[obj.colors.fg.info] or colours[obj.colours.fg.info])
+    term.setCursorPos(1, defaults.turtleY - 2)
+    io.write(selected.bigInfo)
+
+    -- print the pointer
+    term.setCursorPos(1, 4 + pointer)
+    term.setTextColor(colors[obj.colors.fg.highlight] or colours[obj.colours.fg.highlight])
+    io.write(">")
+
+    local ev, key = os.pullEvent("key")
+    if key == keys.up then
+      sel = sel - 1
+      if pointer == 1 then
+        pStart = pStart - 1
+      end
+      if pStart < 1 then
+        pStart = 1
+      end
+      pointer = pointer - 1
+      if pointer < 1 then
+        pointer = 1
+      end
+      if sel < 1 then
+        sel = size(obj) + 1
+        pointer = (size(obj) + 1) < 4 and (size(obj) + 1) or 4
+        pStart = sel - 3
+        if pStart < 1 then
+          pStart = 1
+        end
+      end
+    elseif key == keys.down then
+      sel = sel + 1
+      if pointer == 4 then
+        pStart = pStart + 1
+      end
+      pointer = pointer + 1
+      if pointer > 4 then
+        pointer = 4
+      end
+      if sel > size(obj) + 1 then
+        sel = 1
+        pStart = 1
+        pointer = 1
+      end
+    elseif key == keys.enter then
+      if seltp == 1 then
+        -- selection
+        return sel
+      elseif seltp == 2 then
+        -- setting
+      elseif seltp == 3 then
+        -- subPage
+      end
+    end
+  end
+
+  os.sleep(5)
 end
 
 return display
