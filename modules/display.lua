@@ -19,6 +19,11 @@ end
 -- check the page for errors
 local function checkPage(page)
   -- the readability of this function is horrifying
+
+  -- length of titles/pagenames: 12
+  -- length of infos:            25
+  -- length of bigInfos:         defX * 3
+
   cerr(page, "table", "Page layout is not a table.", 3)
 
   cerr(page.name, "string", "Page layout is missing name.", 3)
