@@ -81,6 +81,32 @@ local function checkPage(page)
   end
 end
 
+-- returns:
+-- 1: number 0, 1, 2, 3 (0:empty, 1:selection, 2:setting, 3:subpage)
+-- 2: table item or nil
+local function iter(obj, i)
+  local sels = #obj.selections
+  local sets = #obj.settings
+  local subs = #obj.subPages
+  if i > sels then
+    if i > sels + sets then
+      -- if the last, return final object
+      if i == sels + sets + subs + 1 then
+        return 1, {title = obj.final, info = "", bigInfo = ""}
+      end
+      -- if past the last, return 0
+      if i > sels + sets + subs then
+        return 0
+      end
+      -- return a subpage
+      return 3, obj.subPages[i - sels - sets]
+    end
+    -- return a setting
+    return 2, obj.settings[i - sels]
+  end
+  -- return a selection
+  return 1, obj.selections[i]
+end
 -- display the page
 local function display(obj)
   -- DEVNOTE: colors "push" themselves downstream
