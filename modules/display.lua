@@ -200,6 +200,22 @@ local function display(obj)
     term.setTextColor(colors[obj.colors.fg.highlight] or colours[obj.colours.fg.highlight])
     io.write(">")
 
+    -- draw down arrow
+    term.setCursorPos(1, 9)
+    if pStart + 3 >= size(obj) + 1 then
+      term.setTextColor(colors[obj.colors.fg.unhighlight] or colours[obj.colours.fg.unhighlight])
+    end
+    io.write(string.char(31))
+
+    -- draw up arrow
+    term.setCursorPos(1, 4)
+    if pStart > 1 then
+      term.setTextColor(colors[obj.colors.fg.highlight] or colours[obj.colours.fg.highlight])
+    else
+      term.setTextColor(colors[obj.colors.fg.unhighlight] or colours[obj.colours.fg.unhighlight])
+    end
+    io.write(string.char(30))
+
     local ev, key = os.pullEvent("key")
     if key == keys.up then
       sel = sel - 1
