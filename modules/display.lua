@@ -238,8 +238,8 @@ local function edit(obj, i, p)
 
   -- handle the editing
   if set.tp == "string" then
-    io.write("NOT YET EDITABLE.            ")
-    os.sleep(2)
+    settings.set(set.setting, dread(settings.get(set.setting)))
+    settings.save(".settings")
   elseif set.tp == "number" then
     io.write("NOT YET EDITABLE.            ")
     os.sleep(2)
