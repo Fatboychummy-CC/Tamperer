@@ -1,7 +1,7 @@
 -- requires
 local defaults = require("modules.defaults")
 
-local function read(def)
+local function dread(def)
   def = def or ""
   local pos = string.len(def) + 1
   local sx, sy = term.getCursorPos()
