@@ -113,6 +113,35 @@ local function size(obj)
   return #obj.selections + #obj.settings + #obj.subPages
 end
 
+-- edit the setting at index i, in terminal position p
+local function edit(obj, i, p)
+  local tp, set = iter(obj, i)
+  if tp ~= 2 then
+    error("Dawg something happened!", 2)
+  end
+
+  term.setCursorPos(15, 4 + p)
+  term.setTextColor(colors[obj.colors.fg.input])
+
+  -- handle the editing
+  if set.tp == "string" then
+    io.write("NOT YET EDITABLE.            ")
+    os.sleep(2)
+  elseif set.tp == "number" then
+    io.write("NOT YET EDITABLE.            ")
+    os.sleep(2)
+  elseif set.tp == "color" then
+    io.write("NOT YET EDITABLE.            ")
+    os.sleep(2)
+  elseif set.tp == "boolean" then
+    io.write("NOT YET EDITABLE.            ")
+    os.sleep(2)
+  else
+    io.write(string.format("Cannot edit type '%s'.", set.tp))
+    os.sleep(2)
+  end
+end
+
 -- display the page
 local function display(obj)
   -- DEVNOTE: colors "push" themselves downstream
@@ -257,6 +286,7 @@ local function display(obj)
         return sel
       elseif seltp == 2 then
         -- setting
+        edit(obj, sel, pointer)
       elseif seltp == 3 then
         -- subPage
       end
