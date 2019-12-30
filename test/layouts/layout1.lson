@@ -52,6 +52,12 @@
       tp = "boolean",
       bigInfo = "Just a boolean setting for this thing."
     },
+    {
+      setting = "shop.setting5",
+      title = "Shop Set 5",
+      tp = "table",
+      bigInfo = "Just a table (invalid) setting for this thing."
+    },
   },
   subPages = {
     {
