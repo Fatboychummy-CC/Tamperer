@@ -1,6 +1,119 @@
 -- requires
 local defaults = require("modules.defaults")
 
+local function read(def)
+  def = def or ""
+  local pos = string.len(def) + 1
+  local sx, sy = term.getCursorPos()
+  local mx = term.getSize()
+  local ins = false
+  local tmr = -1
+  local bOn = false
+
+  term.setCursorBlink(true)
+
+  while true do
+    -- draw --
+
+    -- clear until end of line
+    term.setCursorPos(sx, sy)
+    io.write(string.rep(' ', mx - sx + 1))
+    -- write what we've got
+    term.setCursorPos(sx, sy)
+    local pss = pos - (mx - sx + 1)
+    if pss >= 0 then
+      io.write(string.sub(def, pss + 1))
+    else
+      io.write(def)
+    end
+    -- set cursor to our cursor's position
+    local psss = sx + pos - 1
+    if psss > mx then
+      psss = mx
+    end
+    term.setCursorPos(psss, sy)
+    -- if insert mode, blink full cursor
+    if bOn then
+      local o = term.getBackgroundColor()
+      term.setBackgroundColor(colors.white)
+      io.write(' ')
+      term.setBackgroundColor(o)
+    end
+
+    -- get user input --
+    local ev = {os.pullEvent()}
+    local event = ev[1]
+
+    if event == "char" then
+      local char = ev[2]
+
+      -- insert character into string
+      -- depending on read mode
+      if ins then
+        def = string.sub(def, 1, pos - 1) .. char .. string.sub(def, pos + 1)
+      else
+        def = string.sub(def, 1, pos - 1) .. char .. string.sub(def, pos)
+      end
+      -- move cursor right 1 position
+      pos = pos + 1
+    elseif event == "key" then
+      local key = ev[2]
+
+      if key == keys.backspace then
+        local ps = pos - 2
+
+        if pos - 2 < 0 then
+          ps = 0
+        end
+
+        def = string.sub(def, 1, ps) .. string.sub(def, pos)
+        pos = pos - 1
+        if pos < 1 then
+          pos = 1
+        end
+      elseif key == keys.enter then
+        term.setCursorBlink(false)
+        print()
+        return def
+      elseif key == keys.right then
+        pos = pos + 1
+        if pos > string.len(def) + 1 then
+          pos = string.len(def) + 1
+        end
+      elseif key == keys.left then
+        pos = pos - 1
+        if pos < 1 then
+          pos = 1
+        end
+      elseif key == keys.up then
+        pos = 1
+      elseif key == keys.down then
+        pos = string.len(def) + 1
+      elseif key == keys.delete then
+        def = string.sub(def, 1, pos - 1) .. string.sub(def, pos + 1)
+      elseif key == keys.insert then
+        if ins then
+          ins = false
+          term.setCursorBlink(true)
+          os.cancelTimer(tmr)
+          tmr = -1
+          bOn = false
+        else
+          ins = true
+          term.setCursorBlink(false)
+          tmr = os.startTimer(0.4)
+        end
+      end
+    elseif event == "timer" then
+      local tm = ev[2]
+      if tm == tmr then
+        bOn = not bOn
+        tmr = os.startTimer(0.4)
+      end
+    end
+  end
+end
+
 -- create error if variable a is not of type b
 local function cerr(a, b, err, lvl)
   if type(a) ~= b then
