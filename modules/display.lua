@@ -207,12 +207,16 @@ local function display(obj)
             -- nil or broke
             io.write("? false ? true ?")
           end
+        elseif cur.tp == "color" then
+          io.write("Support soon:tm:")
         else
           io.write("Unsupported type.")
         end
       elseif ctype == 3 then
         -- subpage selection
         io.write("Not yet supported.")
+      else
+        io.write("Broken.")
       end
     end
 
