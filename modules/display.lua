@@ -262,8 +262,9 @@ local function display(obj)
       end
     end
   end
-
-  os.sleep(5)
+  printError("This shouldn't happen.")
+  printError("Please report to le github with your layout file.")
+  os.sleep(30)
 end
 
 return display
