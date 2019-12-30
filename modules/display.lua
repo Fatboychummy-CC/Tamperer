@@ -169,6 +169,15 @@ local function display(obj)
         term.setTextColor(colors[obj.colors.fg.unhighlight] or colours[obj.colours.fg.unhighlight])
         if cur.tp == "string" or cur.tp == "number" then
           io.write(set or "Error: empty")
+        elseif cur.tp == "boolean" then
+          if set == true then
+            io.write("  false [ true ]")
+          elseif set == false then
+            io.write("[ false ] true")
+          else
+            -- nil or broke
+            io.write("? false ? true ?")
+          end
         else
           io.write("Unsupported type.")
         end
