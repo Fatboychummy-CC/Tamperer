@@ -235,6 +235,56 @@ local function size(obj)
   return #obj.selections + #obj.settings + #obj.subPages
 end
 
+local function readNumber(obj, set, p)
+  local str = tostring(settings.get(set.setting))
+  local mx, my = term.getSize()
+  
+  if str == "nil" then str = "0" end
+
+  while true do
+    term.setCursorPos(15, 4 + p)
+    io.write(string.rep(' ', mx - 14))
+    term.setCursorPos(15, 4 + p)
+    local inp = tonumber(dread(str))
+
+    if not inp then
+      -- NaN
+      term.setCursorPos(15, 4 + p)
+      io.write(string.rep(' ', mx - 14))
+      term.setCursorPos(15, 4 + p)
+      io.write("Not a number.")
+      os.sleep(2)
+    else
+      local ok = true
+      -- check if number is below min
+      if set.min and inp < set.min then
+        ok = false
+        term.setCursorPos(15, 4 + p)
+        io.write(string.rep(' ', mx - 14))
+        term.setCursorPos(15, 4 + p)
+        io.write(string.format("Minimum: %d", set.min))
+        str = tostring(set.min)
+      end
+
+      -- check if number is above max
+      if set.max and inp > set.max then
+        ok = false
+        term.setCursorPos(15, 4 + p)
+        io.write(string.rep(' ', mx - 14))
+        term.setCursorPos(15, 4 + p)
+        io.write(string.format("Maximum: %d", set.max))
+        str = tostring(set.max)
+      end
+
+      if ok then
+        return inp
+      else
+        os.sleep(2)
+      end
+    end
+  end
+end
+
 -- edit the setting at index i, in terminal position p
 local function edit(obj, i, p)
   local mx, my = term.getSize()
@@ -252,56 +302,12 @@ local function edit(obj, i, p)
     settings.set(set.setting, dread(settings.get(set.setting)))
     settings.save(obj.settings.location)
   elseif set.tp == "number" then
-    local str = tostring(settings.get(set.setting))
-    if str == "nil" then str = "0" end
+    local inp = readNumber(obj, set, p)
 
-    while true do
-      term.setCursorPos(15, 4 + p)
-      io.write(string.rep(' ', mx - 14))
-      term.setCursorPos(15, 4 + p)
-      local inp = tonumber(dread(str))
-
-      if not inp then
-        -- NaN
-        term.setCursorPos(15, 4 + p)
-        io.write(string.rep(' ', mx - 14))
-        term.setCursorPos(15, 4 + p)
-        io.write("Not a number.")
-        os.sleep(2)
-      else
-        local ok = true
-        -- check if number is below min
-        if set.min and inp < set.min then
-          ok = false
-          term.setCursorPos(15, 4 + p)
-          io.write(string.rep(' ', mx - 14))
-          term.setCursorPos(15, 4 + p)
-          io.write(string.format("Minimum: %d", set.min))
-          str = tostring(set.min)
-        end
-
-        -- check if number is above max
-        if set.max and inp > set.max then
-          ok = false
-          term.setCursorPos(15, 4 + p)
-          io.write(string.rep(' ', mx - 14))
-          term.setCursorPos(15, 4 + p)
-          io.write(string.format("Maximum: %d", set.max))
-          str = tostring(set.max)
-        end
-
-        if ok then
-          settings.set(set.setting, inp)
-          settings.save(obj.settings.location)
-          break
-        else
-          os.sleep(2)
-        end
-      end
-    end
+    settings.set(set.setting, inp)
+    settings.save(obj.settings.location)
   elseif set.tp == "color" then
-    io.write("NOT YET EDITABLE.            ")
-    os.sleep(2)
+
   elseif set.tp == "boolean" then
     io.write("NOT YET EDITABLE.            ")
     os.sleep(2)
