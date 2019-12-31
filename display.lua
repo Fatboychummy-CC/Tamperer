@@ -296,6 +296,45 @@ local function readNumber(obj, set, p)
   end
 end
 
+local function readColor(obj, set, p)
+  local str = tostring(ccolors[settings.get(set.setting)])
+  local mx, my = term.getSize()
+
+  if str == "nil" then str = "?" end
+
+  while true do
+    term.setCursorPos(15, 4 + p)
+    io.write(string.rep(' ', mx - 14))
+    term.setCursorPos(15, 4 + p)
+    local inp = dread(str)
+    local ninp = tonumber(inp)
+
+    if ninp then
+      -- number input
+      if ccolors[ninp] then
+        return ninp
+      else
+        term.setCursorPos(15, 4 + p)
+        io.write(string.rep(' ', mx - 14))
+        term.setCursorPos(15, 4 + p)
+        io.write("Not a color.")
+        os.sleep(2)
+      end
+    else
+      -- color-name input
+      if ccolors[inp] then
+        return ccolors[inp]
+      else
+        term.setCursorPos(15, 4 + p)
+        io.write(string.rep(' ', mx - 14))
+        term.setCursorPos(15, 4 + p)
+        io.write("Not a color.")
+        os.sleep(2)
+      end
+    end
+  end
+end
+
 -- edit the setting at index i, in terminal position p
 local function edit(obj, i, p)
   local mx, my = term.getSize()
@@ -318,7 +357,10 @@ local function edit(obj, i, p)
     settings.set(set.setting, inp)
     settings.save(obj.settings.location)
   elseif set.tp == "color" then
+    local col = readColor(obj, set, p)
 
+    settings.set(set.setting, col)
+    settings.save(obj.settings.location)
   elseif set.tp == "boolean" then
     io.write("NOT YET EDITABLE.            ")
     os.sleep(2)
@@ -401,7 +443,8 @@ local function display(obj)
             io.write("? false ? true ?")
           end
         elseif cur.tp == "color" then
-          io.write("Support soon:tm:")
+          io.write(set and string.format("%s (%d)", ccolors[set], set)
+                   or "? (nil)")
         else
           io.write("Unsupported type.")
         end
