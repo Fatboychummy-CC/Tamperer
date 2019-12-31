@@ -247,7 +247,7 @@ local function edit(obj, i, p)
   if set.tp == "string" then
     -- get a string input, with the input starting with the currently set setting
     settings.set(set.setting, dread(settings.get(set.setting)))
-    settings.save(".settings")
+    settings.save(obj.settings.location)
   elseif set.tp == "number" then
     local str = tostring(settings.get(set.setting))
     if str == "nil" then str = "0" end
@@ -289,7 +289,7 @@ local function edit(obj, i, p)
 
         if ok then
           settings.set(set.setting, inp)
-          settings.save(".settings")
+          settings.save(obj.settings.location)
           break
         else
           os.sleep(2)
@@ -319,6 +319,13 @@ local function display(obj)
 
   -- check that the page is OK
   checkPage(obj)
+  if not obj.settings.location then
+    print("oh no")
+    obj.settings.location = ".settings"
+    os.sleep(1)
+  end
+
+  settings.load(obj.settings.location)
 
   while true do
     -- clear
