@@ -1,5 +1,5 @@
 -- requires
-local display = require("modules.display")
+local display = require(".display")
 
 -- user data
 local layoutsFolder = "/test/layouts/"
