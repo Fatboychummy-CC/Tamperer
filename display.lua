@@ -1,5 +1,8 @@
 -- requires
-local defaults = require("modules.defaults")
+local defaults = {
+  turtleX = 39,
+  turtleY = 13,
+}
 
 local function dread(def)
   def = def or ""
