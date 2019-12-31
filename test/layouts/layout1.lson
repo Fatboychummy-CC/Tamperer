@@ -28,6 +28,7 @@
     }
   },
   settings = {
+    location = ".shopSettings",
     {
       setting = "shop.setting1",
       title = "Shop Set 1",
