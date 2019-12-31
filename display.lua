@@ -160,7 +160,7 @@ local function checkPage(page)
   clen(page.info, 25, "page.info", 3)
 
   cerr(page.bigInfo, "string", "Page " .. page.name .. " is missing bigInfo.", 3)
-  clen(page.bigInfo, defaults.turtleX * 3, "page.bigInfo", 3)
+  clen(page.bigInfo, defaults.turtleX * 3 - 10, "page.bigInfo", 3)
 
   cerr(page.colors or page.colours, "table", "Page " .. page.name .. " is missing colors/colours table.", 3)
   cerr(page.colors.bg or page.colours.bg, "table", "Page " .. page.name .. " is missing bg color/colour table.", 3)
@@ -184,7 +184,7 @@ local function checkPage(page)
       clen(cur.info, 25, "page.selections[" .. tostring(i) .. "].info", 3)
 
       cerr(cur.bigInfo, "string", "Page " .. page.name .. ", selection " .. tostring(i) .. " is missing entry 'bigInfo'.", 3)
-      clen(cur.bigInfo, defaults.turtleX * 3, "page.selections[" .. tostring(i) .. "].bigInfo", 3)
+      clen(cur.bigInfo, defaults.turtleX * 3 - 10, "page.selections[" .. tostring(i) .. "].bigInfo", 3)
     end
   end
 
@@ -195,7 +195,7 @@ local function checkPage(page)
       clen(cur.title, 12, "page.selections[" .. tostring(i) .. "].title", 3)
 
       cerr(cur.bigInfo, "string", "Page " .. page.name .. ", setting " .. tostring(i) .. " is missing entry 'bigInfo'.")
-      clen(cur.bigInfo, defaults.turtleX * 3, "page.selections[" .. tostring(i) .. "].bigInfo", 3)
+      clen(cur.bigInfo, defaults.turtleX * 3 - 10, "page.selections[" .. tostring(i) .. "].bigInfo", 3)
 
       cerr(cur.setting, "string", "Page " .. page.name .. ", setting " .. tostring(i) .. " is missing entry 'setting'.")
 
@@ -249,7 +249,7 @@ end
 local function readNumber(obj, set, p)
   local str = tostring(settings.get(set.setting))
   local mx, my = term.getSize()
-  
+
   if str == "nil" then str = "0" end
 
   while true do
