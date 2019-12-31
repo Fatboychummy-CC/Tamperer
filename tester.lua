@@ -38,6 +38,8 @@ term.setCursorPos(1, 1)
 if not ok then
   print("Errored:")
   printError(err)
+else
+  print("Return code:", err)
 end
 
 print("Complete.")
