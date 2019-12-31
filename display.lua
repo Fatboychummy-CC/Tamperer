@@ -4,6 +4,17 @@ local defaults = {
   turtleY = 13,
 }
 
+local ccolors = {}
+for k, v in pairs(colors) do
+  ccolors[k] = v
+  ccolors[v] = k
+end
+for k, v in pairs(colours) do
+  ccolors[k] = v
+  ccolors[v] = k
+end
+
+
 local function dread(def)
   def = def or ""
   local pos = string.len(def) + 1
