@@ -186,6 +186,12 @@ local function checkPage(page)
       cerr(cur.setting, "string", "Page " .. page.name .. ", setting " .. tostring(i) .. " is missing entry 'setting'.")
 
       cerr(cur.tp, "string", "Page " .. page.name .. ", setting " .. tostring(i) .. " is missing entry 'tp' (the type of setting).")
+      if cur.min then
+        cerr(cur.min, "number", string.format("Page %s, setting %d, minimum is of wrong type.", page.name, i))
+      end
+      if cur.max then
+        cerr(cur.max, "number", string.format("Page %s, setting %d, maximum is of wrong type.", page.name, i))
+      end
     end
   end
 
