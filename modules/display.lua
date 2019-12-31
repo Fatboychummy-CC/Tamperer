@@ -234,6 +234,7 @@ end
 
 -- edit the setting at index i, in terminal position p
 local function edit(obj, i, p)
+  local mx, my = term.getSize()
   local tp, set = iter(obj, i)
   if tp ~= 2 then
     error("Dawg something happened!", 2)
@@ -244,11 +245,57 @@ local function edit(obj, i, p)
 
   -- handle the editing
   if set.tp == "string" then
+    -- get a string input, with the input starting with the currently set setting
     settings.set(set.setting, dread(settings.get(set.setting)))
     settings.save(".settings")
   elseif set.tp == "number" then
-    io.write("NOT YET EDITABLE.            ")
-    os.sleep(2)
+    local str = tostring(settings.get(set.setting))
+    if str == "nil" then str = "0" end
+
+    while true do
+      term.setCursorPos(15, 4 + p)
+      io.write(string.rep(' ', mx - 14))
+      term.setCursorPos(15, 4 + p)
+      local inp = tonumber(dread(str))
+
+      if not inp then
+        -- NaN
+        term.setCursorPos(15, 4 + p)
+        io.write(string.rep(' ', mx - 14))
+        term.setCursorPos(15, 4 + p)
+        io.write("Not a number.")
+        os.sleep(2)
+      else
+        local ok = true
+        -- check if number is below min
+        if set.min and inp < set.min then
+          ok = false
+          term.setCursorPos(15, 4 + p)
+          io.write(string.rep(' ', mx - 14))
+          term.setCursorPos(15, 4 + p)
+          io.write(string.format("Minimum: %d", set.min))
+          str = tostring(set.min)
+        end
+
+        -- check if number is above max
+        if set.max and inp > set.max then
+          ok = false
+          term.setCursorPos(15, 4 + p)
+          io.write(string.rep(' ', mx - 14))
+          term.setCursorPos(15, 4 + p)
+          io.write(string.format("Maximum: %d", set.max))
+          str = tostring(set.max)
+        end
+
+        if ok then
+          settings.set(set.setting, inp)
+          settings.save(".settings")
+          break
+        else
+          os.sleep(2)
+        end
+      end
+    end
   elseif set.tp == "color" then
     io.write("NOT YET EDITABLE.            ")
     os.sleep(2)
