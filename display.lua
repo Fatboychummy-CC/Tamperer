@@ -139,7 +139,7 @@ end
 local function clen(a, b, name, lvl)
   if type(a) ~= "string" then error("Check failure: not string", 2) end
   if string.len(a) > b then
-    error("Page layout string " .. name .. " is too long (max: " .. tostring(b) .. ")", lvl + 1 or 2)
+    error("Page layout string " .. name .. " is too long (max: " .. tostring(b) .. ", at: " .. tostring(string.len(a)) .. ")", lvl + 1 or 2)
   end
 end
 
