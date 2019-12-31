@@ -41,6 +41,28 @@
       bigInfo = "Just a number setting for this thing."
     },
     {
+      setting = "shop.setting2.1",
+      title = "Shop Set 2.1",
+      tp = "number",
+      bigInfo = "Just a number with min setting for this thing.",
+      min = 3
+    },
+    {
+      setting = "shop.setting2.2",
+      title = "Shop Set 2.2",
+      tp = "number",
+      bigInfo = "Just a number with max setting for this thing.",
+      max = 17
+    },
+    {
+      setting = "shop.setting2.3",
+      title = "Shop Set 2.3",
+      tp = "number",
+      bigInfo = "Just a number with min and max setting for this thing.",
+      min = 14,
+      max = 24
+    },
+    {
       setting = "shop.setting3",
       title = "Shop Set 3",
       tp = "color",
