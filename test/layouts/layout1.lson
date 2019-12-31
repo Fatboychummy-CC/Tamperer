@@ -25,7 +25,12 @@
       title = "Select 2",
       info = "Second selection",
       bigInfo = "Select the second thing and return 2"
-    }
+    },
+    {
+      title = "Select 3",
+      info = "Third selection",
+      bigInfo = "A really long big info here just to test the maximum length of things so y'know.  Oh, this will return 3."
+    },
   },
   settings = {
     location = ".shopSettings",
