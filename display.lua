@@ -131,7 +131,8 @@ end
 -- create error if variable a is not of type b
 local function cerr(a, b, err, lvl)
   if type(a) ~= b then
-    error(err, lvl + 1 or 2)
+    error(err .. " (expected " .. b .. ", got " .. type(a) .. ")",
+          lvl and lvl + 1 or 3)
   end
 end
 
@@ -139,7 +140,8 @@ end
 local function clen(a, b, name, lvl)
   if type(a) ~= "string" then error("Check failure: not string", 2) end
   if string.len(a) > b then
-    error("Page layout string " .. name .. " is too long (max: " .. tostring(b) .. ", at: " .. tostring(string.len(a)) .. ")", lvl + 1 or 2)
+    error("Page layout string " .. name .. " is too long (max: " .. tostring(b)
+          .. ", at: " .. tostring(string.len(a)) .. ")", lvl and lvl + 1 or 3)
   end
 end
 
