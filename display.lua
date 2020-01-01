@@ -456,7 +456,12 @@ local function display(obj)
         end
       elseif ctype == 3 then
         -- subpage selection
-        io.write("Not yet supported.")
+        term.setTextColor(colors[obj.colors.fg.main])
+        io.write(cur.name)
+
+        term.setTextColor(colors[obj.colors.fg.unhighlight])
+        term.setCursorPos(15, 5 + i)
+        io.write(cur.info)
       else
         io.write("Broken.")
       end
