@@ -563,6 +563,21 @@ local function display(obj)
         edit(obj, sel, pointer)
       elseif seltp == 3 then
         -- subPage
+        -- get the page
+        local i, cur = iter(obj, sel)
+        -- clone-downs
+        if not cur.colors then
+          cur.colors = obj.colors
+        end
+        if not cur.settings then
+          cur.settings = {location = obj.settings.location}
+        end
+        if not cur.settings.location then
+          cur.settings.location = obj.settings.location
+        end
+
+        -- run the sub page
+        display(cur)
       end
     end
   end
