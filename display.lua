@@ -362,8 +362,14 @@ local function edit(obj, i, p)
     settings.set(set.setting, col)
     settings.save(obj.settings.location)
   elseif set.tp == "boolean" then
-    io.write("NOT YET EDITABLE.            ")
-    os.sleep(2)
+    local sete = settings.get(set.setting)
+    if sete == nil then
+      sete = true
+    else
+      sete = not sete
+    end
+    settings.set(set.setting, sete)
+    settings.save(obj.settings.location)
   else
     io.write(string.format("Cannot edit type '%s'.", set.tp))
     os.sleep(2)
