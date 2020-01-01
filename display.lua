@@ -483,7 +483,7 @@ local function display(obj)
         term.setTextColor(colors[obj.colors.fg.listInfo])
         term.setCursorPos(15, 5 + i)
         io.write(cur.info)
-      else
+      elseif ctype ~= 0 then
         io.write("Broken.")
       end
     end
