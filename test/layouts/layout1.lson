@@ -8,11 +8,15 @@
     },
     fg = {
       main = "white",
-      input = "yellow",
-      highlight = "white",
-      unhighlight = "gray",
+      title = "yellow",
       info = "lightGray",
-      title = "yellow"
+      listInfo = "gray",
+      listTitle = "white",
+      bigInfo = "lightGray",
+      selector = "yellow",
+      arrowDisabled = "gray",
+      arrowEnabled = "white",
+      input = "yellow",
     }
   },
   selections = {
