@@ -248,7 +248,7 @@ local function iter(obj, i)
     if i > sels + sets then
       -- if the last, return final object
       if i == sels + sets + subs + 1 then
-        return 1, {title = obj.final, info = "", bigInfo = ""}
+        return 1, {title = obj.final or "Exit", info = "", bigInfo = ""}
       end
       -- if past the last, return 0
       if i > sels + sets + subs then
