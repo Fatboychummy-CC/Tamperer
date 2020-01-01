@@ -1,0 +1,103 @@
+{
+  name = "Shop Example",
+  info = "Example shop menu",
+  bigInfo = "This is an example page for the shop.",
+
+  colors = {
+    bg = {
+      main = "black",
+    },
+    fg = {
+      main = "white",
+      title = "yellow",
+      info = "lightGray",
+      listInfo = "gray",
+      listTitle = "white",
+      bigInfo = "lightGray",
+      selector = "yellow",
+      arrowDisabled = "gray",
+      arrowEnabled = "white",
+      input = "yellow",
+    }
+  },
+  selections = {
+    {
+      title = "Run shop",
+      info = "Run the shop",
+      bigInfo = "Start up the shop."
+    },
+    {
+      title = "Update",
+      info = "Check for updates",
+      bigInfo = "Select to check for and install any updates."
+    },
+    {
+      title = "Logs",
+      info = "Open logs folder",
+      bigInfo = "Select to open the shell to the /logs/ folder."
+    }
+  },
+  subPages = {
+    {
+      name = "Settings",
+      info = "Edit shop settings",
+      bigInfo = "Edit certain shop settings, like colors, items, and more.",
+
+      settings = {
+        location = ".myShopSettings",
+        {
+          setting = "myShop.owner",
+          title = "Owner",
+          tp = "string",
+          bigInfo = "Who owns this shop?"
+        },
+        {
+          setting = "myShop.name",
+          title = "Name",
+          tp = "string",
+          bigInfo = "What is this shop's name?"
+        },
+        {
+          setting = "myShop.kristAddress",
+          title = "Krist Addr",
+          tp = "string",
+          bigInfo = "What is this shop's krist address?"
+        },
+        {
+          setting = "myShop.kristAddressPassword",
+          title = "Priv key",
+          tp = "password",
+          bigInfo = "What is your krist address' private wallet key?"
+        },
+        {
+          setting = "myShop.backgroundColor",
+          title = "BG color",
+          tp = "color",
+          bigInfo = "Change the main background color for the shop."
+        }
+      },
+      subPages = {
+        {
+          name = "Item 1",
+          info = "Edit item 1",
+          bigInfo = "Edit details for item 1",
+
+          settings = {
+            {
+              setting = "myShop.items.item1.name",
+              title = "Name",
+              tp = "string",
+              bigInfo = "Change the name for this item."
+            },
+            {
+              setting = "myShop.items.item1.price",
+              title = "Price",
+              tp = "number",
+              bigInfo = "Change the cost of this item."
+            }
+          }
+        }
+      }
+    }
+  }
+}
