@@ -153,66 +153,87 @@ local function checkPage(page)
   -- length of infos:            25
   -- length of bigInfos:         defX * 3
 
-  cerr(page, "table", "Page layout is not a table.", 3)
 
-  cerr(page.name, "string", "Page layout is missing name.", 3)
-  clen(page.name, 12, "page.name", 3)
+  cerr(page, "table", "Page layout is not a table.")
 
-  cerr(page.info, "string", "Page " .. page.name .. " is missing info.", 3)
-  clen(page.info, 25, "page.info", 3)
+  cerr(page.name, "string", "Page: name is of wrong type.")
+  clen(page.name, 12, "page.name")
 
-  cerr(page.bigInfo, "string", "Page " .. page.name .. " is missing bigInfo.", 3)
-  clen(page.bigInfo, defaults.turtleX * 3 - 10, "page.bigInfo", 3)
+  local errString = "Page " .. page.name .. ": %s is of wrong type."
 
-  cerr(page.colors or page.colours, "table", "Page " .. page.name .. " is missing colors/colours table.", 3)
-  cerr(page.colors.bg or page.colours.bg, "table", "Page " .. page.name .. " is missing bg color/colour table.", 3)
+  cerr(page.info, "string", string.format(errString, "info"))
+  clen(page.info, 25, "page.info")
+
+  cerr(page.bigInfo, "string", string.format(errString, "bigInfo"))
+  clen(page.bigInfo, defaults.turtleX * 3 - 10, "page.bigInfo")
+
+  cerr(page.colors, "table", string.format(errString, "colors"))
+  cerr(page.colors.bg, "table", string.format(errString, "colors.bg"))
   local exp = {"main"}
   for i = 1, #exp do
-    cerr(page.colors.bg[exp[i]] or page.colours.bg[exp[i]], "string", "Page " .. page.name .. " is missing bg color/colour entry" .. exp[i] .. ".", 3)
+    cerr(page.colors.bg[exp[i]], "string", string.format(errString, "colors.bg." .. exp[i]))
   end
-  cerr(page.colors.fg or page.colours.fg, "table", "Page " .. page.name .. " is missing fg color/colour table.", 3)
+  cerr(page.colors.fg, "table", string.format(errString, "colors.fg"))
   exp = {"main", "input", "unhighlight", "highlight", "info", "title"}
   for i = 1, #exp do
-    cerr(page.colors.fg[exp[i]] or page.colours.fg[exp[i]], "string", "Page " .. page.name .. " is missing fg color/colour entry" .. exp[i] .. ".", 3)
+    cerr(page.colors.fg[exp[i]], "string", string.format(errString, "colors.fg." .. exp[i]))
   end
 
   if page.selections then
     for i = 1, #page.selections do
       local cur = page.selections[i]
-      cerr(cur.title, "string", "Page " .. page.name .. ", selection " .. tostring(i) .. " is missing entry 'title'.", 3)
-      clen(cur.title, 12, "page.selections[" .. tostring(i) .. "].title", 3)
+      local errorString = "Page " .. page.name .. ", selection " .. tostring(i) .. ": %s is of wrong type."
+      local lenString = "page.settings[" .. tostring(i) .. "].%s"
 
-      cerr(cur.info, "string", "Page " .. page.name .. ", selection " .. tostring(i) .. " is missing entry 'info'.", 3)
-      clen(cur.info, 25, "page.selections[" .. tostring(i) .. "].info", 3)
+      cerr(cur.title, "string", string.format(errorString, "title"))
+      clen(cur.title, 12, string.format(lenString, "title"))
 
-      cerr(cur.bigInfo, "string", "Page " .. page.name .. ", selection " .. tostring(i) .. " is missing entry 'bigInfo'.", 3)
-      clen(cur.bigInfo, defaults.turtleX * 3 - 10, "page.selections[" .. tostring(i) .. "].bigInfo", 3)
+      cerr(cur.info, "string", string.format(errorString, "info"))
+      clen(cur.info, 25, string.format(lenString, "info"))
+
+      cerr(cur.bigInfo, "string", string.format(errorString, "bigInfo"))
+      clen(cur.bigInfo, defaults.turtleX * 3 - 10, string.format(lenString, "bigInfo"))
     end
+  else
+    page.selections = {}
   end
 
   if page.settings then
     for i = 1, #page.settings do
       local cur = page.settings[i]
-      cerr(cur.title, "string", "Page " .. page.name .. ", setting " .. tostring(i) .. " is missing entry 'title'.")
-      clen(cur.title, 12, "page.selections[" .. tostring(i) .. "].title", 3)
+      local errorString = "Page " .. page.name .. ", setting " .. tostring(i) .. ": %s is of wrong type."
+      local lenString = "page.settings[" .. tostring(i) .. "].%s"
 
-      cerr(cur.bigInfo, "string", "Page " .. page.name .. ", setting " .. tostring(i) .. " is missing entry 'bigInfo'.")
-      clen(cur.bigInfo, defaults.turtleX * 3 - 10, "page.selections[" .. tostring(i) .. "].bigInfo", 3)
+      cerr(cur.title, "string", string.format(errorString, "title"))
+      clen(cur.title, 12, "title")
 
-      cerr(cur.setting, "string", "Page " .. page.name .. ", setting " .. tostring(i) .. " is missing entry 'setting'.")
+      cerr(cur.bigInfo, "string", string.format(errorString, "bigInfo"))
+      clen(cur.bigInfo, defaults.turtleX * 3 - 10, string.format(lenString, "bigInfo"))
 
-      cerr(cur.tp, "string", "Page " .. page.name .. ", setting " .. tostring(i) .. " is missing entry 'tp' (the type of setting).")
+      cerr(cur.setting, "string", string.format(errorString, "setting"))
+
+      cerr(cur.tp, "string", string.format(errorString, "tp"))
       if cur.min then
-        cerr(cur.min, "number", string.format("Page %s, setting %d, minimum is of wrong type.", page.name, i))
+        cerr(cur.min, "number", string.format(errorString, "min"))
       end
       if cur.max then
-        cerr(cur.max, "number", string.format("Page %s, setting %d, maximum is of wrong type.", page.name, i))
+        cerr(cur.max, "number", string.format(errorString, "max"))
       end
     end
+  else
+    page.settings = {}
   end
 
   if page.subPages then
     -- ONLY CHECK TOPMOST SUBPAGE, DON'T RECURSIVE CHECK
+    for i = 1, #page.subPages do
+      local cur = page.subPages[i]
+
+      cerr(cur.name, "string", string.format("Subpage %d: name is of wrong type.", i))
+      cerr(cur.info, "string", string.format("Subpage %s: info is of wrong type.", cur.name))
+    end
+  else
+    page.subPages = {}
   end
 end
 
