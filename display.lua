@@ -174,7 +174,7 @@ local function checkPage(page)
     cerr(page.colors.bg[exp[i]], "string", string.format(errString, "colors.bg." .. exp[i]))
   end
   cerr(page.colors.fg, "table", string.format(errString, "colors.fg"))
-  exp = {"main", "input", "unhighlight", "highlight", "info", "title"}
+  exp = {"main", "title", "info", "listInfo", "listTitle", "bigInfo", "selector", "arrowDisabled", "arrowEnabled", "input"}
   for i = 1, #exp do
     cerr(page.colors.fg[exp[i]], "string", string.format(errString, "colors.fg." .. exp[i]))
   end
@@ -411,9 +411,7 @@ local function display(obj)
   -- check that the page is OK
   checkPage(obj)
   if not obj.settings.location then
-    print("oh no")
     obj.settings.location = ".settings"
-    os.sleep(1)
   end
 
   settings.load(obj.settings.location)
@@ -441,11 +439,11 @@ local function display(obj)
       -- discriminate by type
       if ctype == 1 then
         -- selection
-        term.setTextColor(colors[obj.colors.fg.main])
+        term.setTextColor(colors[obj.colors.fg.listTitle])
         io.write(cur.title)
 
         term.setCursorPos(15, 5 + i)
-        term.setTextColor(colors[obj.colors.fg.unhighlight])
+        term.setTextColor(colors[obj.colors.fg.listInfo])
         io.write(cur.info)
       elseif ctype == 2 then
         -- setting changer
@@ -455,11 +453,11 @@ local function display(obj)
           set = set .. "..."
         end
 
-        term.setTextColor(colors[obj.colors.fg.main])
+        term.setTextColor(colors[obj.colors.fg.listTitle])
         io.write(cur.title)
 
         term.setCursorPos(15, 5 + i)
-        term.setTextColor(colors[obj.colors.fg.unhighlight])
+        term.setTextColor(colors[obj.colors.fg.listInfo])
         if cur.tp == "string" or cur.tp == "number" then
           io.write(set or "Error: empty")
         elseif cur.tp == "boolean" then
@@ -479,10 +477,10 @@ local function display(obj)
         end
       elseif ctype == 3 then
         -- subpage selection
-        term.setTextColor(colors[obj.colors.fg.main])
+        term.setTextColor(colors[obj.colors.fg.listTitle])
         io.write(cur.name)
 
-        term.setTextColor(colors[obj.colors.fg.unhighlight])
+        term.setTextColor(colors[obj.colors.fg.listInfo])
         term.setCursorPos(15, 5 + i)
         io.write(cur.info)
       else
@@ -494,28 +492,30 @@ local function display(obj)
     local seltp, selected = iter(obj, sel)
 
     -- print the info of the selected item
-    term.setTextColor(colors[obj.colors.fg.info])
+    term.setTextColor(colors[obj.colors.fg.bigInfo])
     term.setCursorPos(1, defaults.turtleY - 2)
     io.write(selected.bigInfo)
 
     -- print the pointer
     term.setCursorPos(1, 4 + pointer)
-    term.setTextColor(colors[obj.colors.fg.highlight])
+    term.setTextColor(colors[obj.colors.fg.selector])
     io.write(">")
 
     -- draw down arrow
     term.setCursorPos(1, 9)
     if pStart + 3 >= size(obj) + 1 then
-      term.setTextColor(colors[obj.colors.fg.unhighlight])
+      term.setTextColor(colors[obj.colors.fg.arrowDisabled])
+    else
+      term.setTextColor(colors[obj.colors.fg.arrowEnabled])
     end
     io.write(string.char(31))
 
     -- draw up arrow
     term.setCursorPos(1, 4)
     if pStart > 1 then
-      term.setTextColor(colors[obj.colors.fg.highlight])
+      term.setTextColor(colors[obj.colors.fg.arrowEnabled])
     else
-      term.setTextColor(colors[obj.colors.fg.unhighlight])
+      term.setTextColor(colors[obj.colors.fg.arrowDisabled])
     end
     io.write(string.char(30))
 
