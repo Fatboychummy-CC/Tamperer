@@ -153,6 +153,12 @@
           tp = "boolean",
           bigInfo = "Just a boolean setting for this thing."
         },
+        {
+          setting = "shop.sub2.password",
+          title = "Password",
+          tp = "password",
+          bigInfo = "Set a password, then confirm it."
+        }
       },
       final = "Go back."
     }
