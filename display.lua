@@ -358,6 +358,35 @@ local function readColor(obj, set, p)
   end
 end
 
+-- ask the user if they are sure they want to edit the password
+local function askPass(obj, set, p)
+  local mx, my = term.getSize()
+  local affirm = false
+
+  term.setTextColor(ccolors[obj.colors.fg.listTitle])
+
+  term.setCursorPos(2, 4 + p)
+  io.write(string.rep(' ', mx - 1))
+  term.setCursorPos(2, 4 + p)
+  io.write("You sure?")
+
+
+  while true do
+    term.setCursorPos(15, 4 + p)
+    io.write(string.rep(' ', mx - 14))
+    term.setCursorPos(15, 4 + p)
+    io.write(affirm and "[ YES ] NO" or "  YES [ NO ]")
+
+    local ev, key = os.pullEvent("key")
+
+    if key == keys.right or key == keys.left or key == keys.tab then
+      affirm = not affirm
+    elseif key == keys.enter then
+      return affirm
+    end
+  end
+end
+
 -- edit the setting at index i, in terminal position p
 local function edit(obj, i, p)
   local mx, my = term.getSize()
@@ -393,6 +422,11 @@ local function edit(obj, i, p)
     end
     settings.set(set.setting, sete)
     settings.save(obj.settings.location)
+  elseif set.tp == "password" then
+    if askPass(obj, set, p) then
+      settings.set(set.setting, getPass(obj, set, p))
+      settings.save(obj.settings.location)
+    end
   else
     io.write(string.format("Cannot edit type '%s'.", set.tp))
     os.sleep(2)
