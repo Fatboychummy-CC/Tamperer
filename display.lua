@@ -358,6 +358,12 @@ local function readColor(obj, set, p)
   end
 end
 
+-- Actually read the password
+local function getPass(obj, set, p)
+  local mx, my = term.getSize()
+  
+end
+
 -- ask the user if they are sure they want to edit the password
 local function askPass(obj, set, p)
   local mx, my = term.getSize()
