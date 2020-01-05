@@ -15,7 +15,7 @@ for k, v in pairs(colours) do
 end
 
 
-local function dread(def)
+local function dread(def, readChar)
   def = def or ""
   local pos = string.len(def) + 1
   local sx, sy = term.getCursorPos()
@@ -27,6 +27,7 @@ local function dread(def)
   term.setCursorBlink(true)
 
   while true do
+    local disp = type(readChar == "string") and string.rep(readChar:sub(1, 1), string.len(def)) or def
     -- draw --
 
     -- clear until end of line
@@ -36,9 +37,9 @@ local function dread(def)
     term.setCursorPos(sx, sy)
     local pss = pos - (mx - sx + 1)
     if pss >= 0 then
-      io.write(string.sub(def, pss + 1))
+      io.write(string.sub(disp, pss + 1))
     else
-      io.write(def)
+      io.write(disp)
     end
     -- set cursor to our cursor's position
     local psss = sx + pos - 1
@@ -361,7 +362,7 @@ end
 -- Actually read the password
 local function getPass(obj, set, p)
   local mx, my = term.getSize()
-  
+
 end
 
 -- ask the user if they are sure they want to edit the password
