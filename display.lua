@@ -230,6 +230,10 @@ local function checkPage(page)
       if cur.max then
         cerr(cur.max, "number", string.format(errorString, "max"))
       end
+
+      if cur.tp == "password" then
+        cerr(cur.store, "string", string.format(errorString, "store"))
+      end
     end
   else
     page.settings = {}
@@ -583,7 +587,7 @@ local function display(obj)
                    or "? (nil)")
         elseif cur.tp == "password" then
           local cv = {plain = "Plaintext", }
-          io.write(set and "Stored as" or "Not yet set.")
+          io.write(set and "Stored as " .. cv[cur.store] or "Not yet set.")
         else
           io.write("Unsupported type.")
         end
