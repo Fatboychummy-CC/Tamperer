@@ -389,6 +389,44 @@ end
 local function getPass(obj, set, p)
   local mx, my = term.getSize()
 
+  while true do
+    term.setCursorPos(2, 4 + p)
+    io.write(string.rep(' ', mx - 1))
+    term.setCursorPos(2, 4 + p)
+    term.setTextColor(ccolors[obj.colors.fg.listTitle])
+    io.write("Password:")
+    term.setCursorPos(15, 4 + p)
+    io.write(string.rep(' ', mx - 14))
+    term.setCursorPos(15, 4 + p)
+    term.setTextColor(ccolors[obj.colors.fg.input])
+    local pass = dread("", '*')
+
+    term.setCursorPos(2, 4 + p)
+    io.write(string.rep(' ', mx - 1))
+    term.setCursorPos(2, 4 + p)
+    term.setTextColor(ccolors[obj.colors.fg.listTitle])
+    io.write("Repeat:")
+    term.setCursorPos(15, 4 + p)
+    io.write(string.rep(' ', mx - 14))
+    term.setCursorPos(15, 4 + p)
+    term.setTextColor(ccolors[obj.colors.fg.input])
+    local pass2 = dread("", '*')
+
+    -- if they match, return the password
+    if pass == pass2 then
+      -- TODO: passwords hashed or etc
+      return pass
+    else
+      term.setCursorPos(15, 4 + p)
+      io.write(string.rep(' ', mx - 14))
+      term.setCursorPos(15, 4 + p)
+      local col = term.getTextColor()
+      term.setTextColor(ccolors[obj.colors.fg.error])
+      io.write("Not matching!")
+      term.setTextColor(col)
+      os.sleep(2)
+    end
+  end
 end
 
 -- ask the user if they are sure they want to edit the password
