@@ -1,3 +1,13 @@
+
+--[[
+  TODO: Un-hardcode values
+  TODO: Make nice for Computers, Turtles, and maybe Pocket Computers?
+  TODO: better color handling
+  TODO: do something with the defaults table
+  TODO: cleanup
+  TODO: more code comments
+  TODO: idk
+]]
 -- requires
 local defaults = {
   turtleX = 39,
