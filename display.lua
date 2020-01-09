@@ -297,7 +297,11 @@ local function readNumber(obj, set, p)
       term.setCursorPos(15, 4 + p)
       io.write(string.rep(' ', mx - 14))
       term.setCursorPos(15, 4 + p)
+      local col = term.getTextColor()
+      term.setTextColor(ccolors[obj.colors.fg.error])
       io.write("Not a number.")
+      term.setTextColor(col)
+
       os.sleep(2)
     else
       local ok = true
@@ -307,7 +311,10 @@ local function readNumber(obj, set, p)
         term.setCursorPos(15, 4 + p)
         io.write(string.rep(' ', mx - 14))
         term.setCursorPos(15, 4 + p)
+        local col = term.getTextColor()
+        term.setTextColor(ccolors[obj.colors.fg.error])
         io.write(string.format("Minimum: %d", set.min))
+        term.setTextColor(col)
         str = tostring(set.min)
       end
 
@@ -317,7 +324,10 @@ local function readNumber(obj, set, p)
         term.setCursorPos(15, 4 + p)
         io.write(string.rep(' ', mx - 14))
         term.setCursorPos(15, 4 + p)
+        local col = term.getTextColor()
+        term.setTextColor(ccolors[obj.colors.fg.error])
         io.write(string.format("Maximum: %d", set.max))
+        term.setTextColor(col)
         str = tostring(set.max)
       end
 
@@ -351,7 +361,10 @@ local function readColor(obj, set, p)
         term.setCursorPos(15, 4 + p)
         io.write(string.rep(' ', mx - 14))
         term.setCursorPos(15, 4 + p)
+        local col = term.getTextColor()
+        term.setTextColor(ccolors[obj.colors.fg.error])
         io.write("Not a color.")
+        term.setTextColor(col)
         os.sleep(2)
       end
     else
@@ -362,7 +375,10 @@ local function readColor(obj, set, p)
         term.setCursorPos(15, 4 + p)
         io.write(string.rep(' ', mx - 14))
         term.setCursorPos(15, 4 + p)
+        local col = term.getTextColor()
+        term.setTextColor(ccolors[obj.colors.fg.error])
         io.write("Not a color.")
+        term.setTextColor(col)
         os.sleep(2)
       end
     end
@@ -392,6 +408,7 @@ local function askPass(obj, set, p)
     term.setCursorPos(15, 4 + p)
     io.write(string.rep(' ', mx - 14))
     term.setCursorPos(15, 4 + p)
+    term.setTextColor(ccolors[obj.colors.fg.input])
     io.write(affirm and "[ YES ] NO" or "  YES [ NO ]")
 
     local ev, key = os.pullEvent("key")
@@ -445,7 +462,10 @@ local function edit(obj, i, p)
       settings.save(obj.settings.location)
     end
   else
+    local col = term.getTextColor()
+    term.setTextColor(ccolors[obj.colors.fg.error])
     io.write(string.format("Cannot edit type '%s'.", set.tp))
+    term.setTextColor(col)
     os.sleep(2)
   end
 end
