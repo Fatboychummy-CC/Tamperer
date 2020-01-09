@@ -185,7 +185,7 @@ local function checkPage(page)
     cerr(page.colors.bg[exp[i]], "string", string.format(errString, "colors.bg." .. exp[i]))
   end
   cerr(page.colors.fg, "table", string.format(errString, "colors.fg"))
-  exp = {"main", "title", "info", "listInfo", "listTitle", "bigInfo", "selector", "arrowDisabled", "arrowEnabled", "input"}
+  exp = {"error", "main", "title", "info", "listInfo", "listTitle", "bigInfo", "selector", "arrowDisabled", "arrowEnabled", "input"}
   for i = 1, #exp do
     cerr(page.colors.fg[exp[i]], "string", string.format(errString, "colors.fg." .. exp[i]))
   end
