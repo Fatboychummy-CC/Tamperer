@@ -581,6 +581,9 @@ local function display(obj)
         elseif cur.tp == "color" then
           io.write(set and string.format("%s (%d)", ccolors[set], set)
                    or "? (nil)")
+        elseif cur.tp == "password" then
+          local cv = {plain = "Plaintext", }
+          io.write(set and "Stored as" or "Not yet set.")
         else
           io.write("Unsupported type.")
         end
