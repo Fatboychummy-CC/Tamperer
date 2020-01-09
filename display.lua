@@ -27,7 +27,7 @@ local function dread(def, readChar)
   term.setCursorBlink(true)
 
   while true do
-    local disp = type(readChar == "string") and string.rep(readChar:sub(1, 1), string.len(def)) or def
+    local disp = type(readChar) == "string" and string.rep(readChar:sub(1, 1), string.len(def)) or def
     -- draw --
 
     -- clear until end of line
