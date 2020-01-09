@@ -2,6 +2,8 @@
 --[[
   TODO: Un-hardcode values
   TODO: Make nice for Computers, Turtles, and maybe Pocket Computers?
+    NOTE: Turtles are the "main audience" so making this work for turtles will
+          take priority. 
   TODO: better color handling
   TODO: do something with the defaults table
   TODO: cleanup
