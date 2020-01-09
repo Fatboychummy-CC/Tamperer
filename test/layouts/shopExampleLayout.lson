@@ -68,6 +68,7 @@
           setting = "myShop.kristAddressPassword",
           title = "Priv key",
           tp = "password",
+          store = "plain",
           bigInfo = "What is your krist address' private wallet key?"
         },
         {

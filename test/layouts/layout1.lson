@@ -158,6 +158,7 @@
           setting = "shop.sub2.password",
           title = "Password",
           tp = "password",
+          store = "plain",
           bigInfo = "Set a password, then confirm it."
         }
       },
