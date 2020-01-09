@@ -18,6 +18,7 @@
       arrowDisabled = "gray",
       arrowEnabled = "white",
       input = "yellow",
+      error = "red",
     }
   },
   selections = {
