@@ -2,7 +2,7 @@
 name: Wiki Mistakes
 about: Is there something wrong with the wiki? Let me know!
 title: You screwed up the wiki, idiot.
-labels: ''
+labels: Wiki
 assignees: ''
 
 ---
