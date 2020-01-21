@@ -97,7 +97,8 @@
               tp = "number",
               bigInfo = "Change the cost of this item."
             }
-          }
+          },
+          final = "Go Back."
         }
       }
     }
