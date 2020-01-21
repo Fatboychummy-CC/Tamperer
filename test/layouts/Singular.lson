@@ -1,0 +1,91 @@
+{
+  name = "SINGULAR",
+  info = "SELECTIONS",
+  bigInfo = "yeah this is unneeded.",
+
+  colors = {
+    bg = {
+      main = "black",
+    },
+    fg = {
+      main = "white",
+      title = "yellow",
+      info = "lightGray",
+      listInfo = "gray",
+      listTitle = "white",
+      bigInfo = "lightGray",
+      selector = "yellow",
+      arrowDisabled = "gray",
+      arrowEnabled = "white",
+      input = "yellow",
+      error = "red",
+    }
+  },
+
+  subPages = {
+    {
+      name = "Strings",
+      info = "Set string settings.",
+      bigInfo = "Go to this page to get string settings to be changed lol",
+      settings = {
+        {
+          setting = "example.string",
+          title = "String val",
+          tp = "string",
+          bigInfo = "Set a string value and save it to disk."
+        }
+      },
+      final = "Go back."
+    },
+    {
+      name = "Numbers",
+      info = "Set number settings.",
+      bigInfo = "Go to this page to get number settings to be changed lol",
+      settings = {
+        {
+          setting = "example.number",
+          title = "Number val",
+          tp = "number",
+          bigInfo = "Set a number value and save it to disk."
+        },
+        {
+          setting = "example.numberminmax",
+          title = "minmax",
+          tp = "number",
+          bigInfo = "Set a number value (with min/max) and save it to disk.",
+          min = 3,
+          max = 10
+        }
+      },
+      final = "Go back."
+    },
+    {
+      name = "Colors",
+      info = "Set color settings.",
+      bigInfo = "Go to this page to get color settings to be changed lol",
+      settings = {
+        {
+          setting = "example.color",
+          title = "Color",
+          tp = "color",
+          bigInfo = "Set a color value and save it to disk."
+        }
+      },
+      final = "Go back."
+    },
+    {
+      name = "Booleans",
+      info = "Set boolean settings.",
+      bigInfo = "Go to this page to get boolean settings to be changed lol",
+      settings = {
+        {
+          setting = "example.bool",
+          title = "Bool",
+          tp = "boolean",
+          bigInfo = "Set a boolean value and save it to disk."
+        }
+      },
+      final = "Go back."
+    }
+  }
+}
