@@ -323,6 +323,16 @@ local function checkPage(page)
 
       if cur.tp == "password" then
         cerr(cur.store, "string", string.format(errorString, "store"))
+        if cur.store ~= "plain"
+          and cur.store ~= "sha256"
+          and cur.store ~= "sha256salt" then
+          error(string.format("Page %s, setting %d: store is not of allowed "
+                              .. "values (plain, sha256, sha256salt)",
+                              page.name, i), 2)
+        elseif cur.store ~= "plain" then
+          -- download requirements.
+          getRequiredFile("https://pastebin.com/raw/6UV4qfNF", "/sha256.lua")
+        end
       end
     end
   else
@@ -519,8 +529,20 @@ local function getPass(obj, set, p)
 
     -- if they match, return the password
     if pass == pass2 then
-      -- TODO: passwords hashed or etc
-      return pass
+      -- Password hashed and returned immediately.  No middle function call
+      -- between the password read and the hashing.
+      local salt
+
+      if set.store == "sha256" or set.store == "sha256salt" then
+        local sha256 = require(".sha256")
+        if set.store == "sha256salt" then
+          salt = math.random(1, 100000)
+          pass = tostring(salt) .. "," .. pass
+        end
+        pass = sha256.digest(pass):toHex()
+      end
+
+      return pass, salt
     else
       term.setCursorPos(positions.nameLen + 3, positions.startY + p)
       io.write(string.rep(' ', mx - 14))
@@ -601,7 +623,11 @@ local function edit(obj, i, p)
     settings.save(obj.settings.location)
   elseif set.tp == "password" then
     if askPass(obj, set, p) then
-      settings.set(set.setting, getPass(obj, set, p))
+      local pass, salt = getPass(obj, set, p)
+      settings.set(set.setting, pass)
+      if salt then
+        settings.set(set.setting .. ".salt", salt)
+      end
       settings.save(obj.settings.location)
     end
   else
@@ -687,8 +713,8 @@ local function display(obj)
           io.write(set and string.format("%s (%d)", ccolors[set], set)
                    or "? (nil)")
         elseif cur.tp == "password" then
-          local cv = {plain = "Plaintext", }
-          io.write(set and "Stored as " .. cv[cur.store] or "Not yet set.")
+          local cv = {plain = "Plaintext", sha256 = "sha256", sha256salt = "sha256 + salt"}
+          io.write(set and (pocket and cv[cur.store]) or "Stored as " .. cv[cur.store] or "Not yet set.")
         else
           io.write(pocket and "Unsupported" or "Unsupported type.")
         end
