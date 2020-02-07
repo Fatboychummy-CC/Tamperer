@@ -34,7 +34,7 @@
     {
       title = "Select 3",
       info = "Third selection",
-      bigInfo = "A really long big info here just to test the maximum length of things so y'know.  Oh, this will return 3."
+      bigInfo = "A really long big info here just to test the maximum length."
     },
   },
   settings = {
