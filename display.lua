@@ -12,15 +12,17 @@
   TODO: idk
 ]]
 
---[[ positions: stores vital locations that are to be used in place of hardcoded
- locations
+--[[
+ positions: stores vital locations that are to be used in place of hardcoded
+ locations, along with other data
 
-  X: max size X
-  Y: max size Y
+  X:       max size X
+  Y:       max size Y
   nameLen: Max length of an item name
   infoLen: Max length of an item info
-  startY: start point for the menu, default to 4
-  bigY: bigInfo Y position, default to y-2
+  startY:  start point for the menu, default to 4
+  bigY:    bigInfo Y position, default to y-2
+  items:   how many items to display per page
 ]]
 
 local positions = {}
@@ -36,6 +38,7 @@ if pocket then
 
   positions.nameLen = 8
   positions.infoLen = 16
+  positions.items = 11
 
 elseif turtle then
   -- turtle  mode
@@ -43,12 +46,14 @@ elseif turtle then
 
   positions.nameLen = 12
   positions.infoLen = 25
+  positions.items = 4
 else
   -- computer mode
   mode = 3
 
   positions.nameLen = 16
   positions.infoLen = 32
+  positions.items = 10
 end
 
 local ccolors = {}
@@ -204,8 +209,8 @@ local function checkPage(page)
 
   cerr(page, "table", "Page layout is not a table.")
 
+
   cerr(page.name, "string", "Page: name is of wrong type.")
-  clen(page.name, 12, "page.name")
 
   local errString = "Page " .. page.name .. ": %s is of wrong type."
 
@@ -216,11 +221,19 @@ local function checkPage(page)
       (page.platform == "pocket" or page.platform == "turtle") then
     error("Menu is designed for a different platform (" .. page.platform .. ").", 2)
   end
+
+  clen(page.name, positions.nameLen, "page.name")
+
   cerr(page.info, "string", string.format(errString, "info"))
-  clen(page.info, 25, "page.info")
+  clen(page.info, positions.infoLen, "page.info")
 
   cerr(page.bigInfo, "string", string.format(errString, "bigInfo"))
-  clen(page.bigInfo, positions.X * 3 - 10, "page.bigInfo")
+  term.setCursorPos(1, 1)
+  local lines = write(page.bigInfo)
+  if lines > 2 then
+    error("Page " .. page.name .. ": bigInfo is too long and prints too many "
+          .. "lines. (Unknown max length)", 2)
+  end
 
   cerr(page.colors, "table", string.format(errString, "colors"))
   cerr(page.colors.bg, "table", string.format(errString, "colors.bg"))
@@ -241,13 +254,19 @@ local function checkPage(page)
       local lenString = "page.settings[" .. tostring(i) .. "].%s"
 
       cerr(cur.title, "string", string.format(errorString, "title"))
-      clen(cur.title, 12, string.format(lenString, "title"))
+      clen(cur.title, positions.nameLen, string.format(lenString, "title"))
 
       cerr(cur.info, "string", string.format(errorString, "info"))
-      clen(cur.info, 25, string.format(lenString, "info"))
+      clen(cur.info, positions.infoLen, string.format(lenString, "info"))
 
       cerr(cur.bigInfo, "string", string.format(errorString, "bigInfo"))
-      clen(cur.bigInfo, positions.X * 3 - 10, string.format(lenString, "bigInfo"))
+      term.setCursorPos(1, 1)
+      local lines = write(cur.bigInfo)
+      if lines > 2 then
+        error("Page " .. page.name .. ", selection " .. tostring(i)
+              .. ": bigInfo is too long and prints too many "
+              .. "lines (Unknown max length).", 2)
+      end
     end
   else
     page.selections = {}
@@ -260,10 +279,16 @@ local function checkPage(page)
       local lenString = "page.settings[" .. tostring(i) .. "].%s"
 
       cerr(cur.title, "string", string.format(errorString, "title"))
-      clen(cur.title, 12, "title")
+      clen(cur.title, positions.nameLen, "title")
 
       cerr(cur.bigInfo, "string", string.format(errorString, "bigInfo"))
-      clen(cur.bigInfo, positions.X * 3 - 10, string.format(lenString, "bigInfo"))
+      term.setCursorPos(1, 1)
+      local lines = write(cur.bigInfo)
+      if lines > 2 then
+        error("Page " .. page.name .. ", setting " .. tostring(i)
+              .. ": bigInfo is too long and prints too many "
+              .. "lines (Unknown max length).", 2)
+      end
 
       cerr(cur.setting, "string", string.format(errorString, "setting"))
 
@@ -287,13 +312,24 @@ local function checkPage(page)
     -- ONLY CHECK TOPMOST SUBPAGE, DON'T RECURSIVE CHECK
     for i = 1, #page.subPages do
       local cur = page.subPages[i]
+      local errorString = "Subpage %d: %s is of wrong type."
 
-      cerr(cur.name, "string", string.format("Subpage %d: name is of wrong type.", i))
-      cerr(cur.info, "string", string.format("Subpage %s: info is of wrong type.", cur.name))
+      cerr(cur.name, "string", string.format(errorString, i, "name"))
+      cerr(cur.info, "string", string.format(errorString, i, "info"))
+      cerr(cur.bigInfo, "string", string.format(errorString, i, "bigInfo"))
+      term.setCursorPos(1, 1)
+      local lines = write(cur.bigInfo)
+      if lines > 2 then
+        error("Page " .. page.name .. ", subpage " .. tostring(i)
+              .. ": bigInfo is too long and prints too many "
+              .. "lines (Unknown max length).", 2)
+      end
     end
   else
     page.subPages = {}
   end
+
+  term.clear()
 end
 
 -- returns:
@@ -335,16 +371,16 @@ local function readNumber(obj, set, p)
   if str == "nil" then str = "0" end
 
   while true do
-    term.setCursorPos(15, 4 + p)
+    term.setCursorPos(positions.nameLen + 3, positions.startY + p)
     io.write(string.rep(' ', mx - 14))
-    term.setCursorPos(15, 4 + p)
+    term.setCursorPos(positions.nameLen + 3, positions.startY + p)
     local inp = tonumber(dread(str))
 
     if not inp then
       -- NaN
-      term.setCursorPos(15, 4 + p)
+      term.setCursorPos(positions.nameLen + 3, positions.startY + p)
       io.write(string.rep(' ', mx - 14))
-      term.setCursorPos(15, 4 + p)
+      term.setCursorPos(positions.nameLen + 3, positions.startY + p)
       local col = term.getTextColor()
       term.setTextColor(ccolors[obj.colors.fg.error])
       io.write("Not a number.")
@@ -356,9 +392,9 @@ local function readNumber(obj, set, p)
       -- check if number is below min
       if set.min and inp < set.min then
         ok = false
-        term.setCursorPos(15, 4 + p)
+        term.setCursorPos(positions.nameLen + 3, positions.startY + p)
         io.write(string.rep(' ', mx - 14))
-        term.setCursorPos(15, 4 + p)
+        term.setCursorPos(positions.nameLen + 3, positions.startY + p)
         local col = term.getTextColor()
         term.setTextColor(ccolors[obj.colors.fg.error])
         io.write(string.format("Minimum: %d", set.min))
@@ -369,9 +405,9 @@ local function readNumber(obj, set, p)
       -- check if number is above max
       if set.max and inp > set.max then
         ok = false
-        term.setCursorPos(15, 4 + p)
+        term.setCursorPos(positions.nameLen + 3, positions.startY + p)
         io.write(string.rep(' ', mx - 14))
-        term.setCursorPos(15, 4 + p)
+        term.setCursorPos(positions.nameLen + 3, positions.startY + p)
         local col = term.getTextColor()
         term.setTextColor(ccolors[obj.colors.fg.error])
         io.write(string.format("Maximum: %d", set.max))
@@ -395,9 +431,9 @@ local function readColor(obj, set, p)
   if str == "nil" then str = "?" end
 
   while true do
-    term.setCursorPos(15, 4 + p)
+    term.setCursorPos(positions.nameLen + 3, positions.startY + p)
     io.write(string.rep(' ', mx - 14))
-    term.setCursorPos(15, 4 + p)
+    term.setCursorPos(positions.nameLen + 3, positions.startY + p)
     local inp = dread(str)
     local ninp = tonumber(inp)
 
@@ -406,9 +442,9 @@ local function readColor(obj, set, p)
       if ccolors[ninp] then
         return ninp
       else
-        term.setCursorPos(15, 4 + p)
+        term.setCursorPos(positions.nameLen + 3, positions.startY + p)
         io.write(string.rep(' ', mx - 14))
-        term.setCursorPos(15, 4 + p)
+        term.setCursorPos(positions.nameLen + 3, positions.startY + p)
         local col = term.getTextColor()
         term.setTextColor(ccolors[obj.colors.fg.error])
         io.write("Not a color.")
@@ -420,9 +456,9 @@ local function readColor(obj, set, p)
       if ccolors[inp] then
         return ccolors[inp]
       else
-        term.setCursorPos(15, 4 + p)
+        term.setCursorPos(positions.nameLen + 3, positions.startY + p)
         io.write(string.rep(' ', mx - 14))
-        term.setCursorPos(15, 4 + p)
+        term.setCursorPos(positions.nameLen + 3, positions.startY + p)
         local col = term.getTextColor()
         term.setTextColor(ccolors[obj.colors.fg.error])
         io.write("Not a color.")
@@ -438,25 +474,25 @@ local function getPass(obj, set, p)
   local mx, my = term.getSize()
 
   while true do
-    term.setCursorPos(2, 4 + p)
+    term.setCursorPos(2, positions.startY + p)
     io.write(string.rep(' ', mx - 1))
-    term.setCursorPos(2, 4 + p)
+    term.setCursorPos(2, positions.startY + p)
     term.setTextColor(ccolors[obj.colors.fg.listTitle])
     io.write("Password:")
-    term.setCursorPos(15, 4 + p)
+    term.setCursorPos(positions.nameLen + 3, positions.startY + p)
     io.write(string.rep(' ', mx - 14))
-    term.setCursorPos(15, 4 + p)
+    term.setCursorPos(positions.nameLen + 3, positions.startY + p)
     term.setTextColor(ccolors[obj.colors.fg.input])
     local pass = dread("", '*')
 
-    term.setCursorPos(2, 4 + p)
+    term.setCursorPos(2, positions.startY + p)
     io.write(string.rep(' ', mx - 1))
-    term.setCursorPos(2, 4 + p)
+    term.setCursorPos(2, positions.startY + p)
     term.setTextColor(ccolors[obj.colors.fg.listTitle])
     io.write("Repeat:")
-    term.setCursorPos(15, 4 + p)
+    term.setCursorPos(positions.nameLen + 3, positions.startY + p)
     io.write(string.rep(' ', mx - 14))
-    term.setCursorPos(15, 4 + p)
+    term.setCursorPos(positions.nameLen + 3, positions.startY + p)
     term.setTextColor(ccolors[obj.colors.fg.input])
     local pass2 = dread("", '*')
 
@@ -465,9 +501,9 @@ local function getPass(obj, set, p)
       -- TODO: passwords hashed or etc
       return pass
     else
-      term.setCursorPos(15, 4 + p)
+      term.setCursorPos(positions.nameLen + 3, positions.startY + p)
       io.write(string.rep(' ', mx - 14))
-      term.setCursorPos(15, 4 + p)
+      term.setCursorPos(positions.nameLen + 3, positions.startY + p)
       local col = term.getTextColor()
       term.setTextColor(ccolors[obj.colors.fg.error])
       io.write("Not matching!")
@@ -484,16 +520,16 @@ local function askPass(obj, set, p)
 
   term.setTextColor(ccolors[obj.colors.fg.listTitle])
 
-  term.setCursorPos(2, 4 + p)
+  term.setCursorPos(2, positions.startY + p)
   io.write(string.rep(' ', mx - 1))
-  term.setCursorPos(2, 4 + p)
+  term.setCursorPos(2, positions.startY + p)
   io.write("You sure?")
 
 
   while true do
-    term.setCursorPos(15, 4 + p)
+    term.setCursorPos(positions.nameLen + 3, positions.startY + p)
     io.write(string.rep(' ', mx - 14))
-    term.setCursorPos(15, 4 + p)
+    term.setCursorPos(positions.nameLen + 3, positions.startY + p)
     term.setTextColor(ccolors[obj.colors.fg.input])
     io.write(affirm and "[ YES ] NO" or "  YES [ NO ]")
 
@@ -515,7 +551,7 @@ local function edit(obj, i, p)
     error("Dawg something happened!", 2)
   end
 
-  term.setCursorPos(15, 4 + p)
+  term.setCursorPos(positions.nameLen + 3, positions.startY + p)
   term.setTextColor(colors[obj.colors.fg.input])
 
   -- handle the editing
@@ -589,7 +625,7 @@ local function display(obj)
     io.write(obj.info)
 
     -- display the four items.
-    for i = 0, 3 do
+    for i = 0, positions.items - 1 do
       local ctype, cur = iter(obj, pStart + i)
       term.setCursorPos(2, 5 + i)
 
@@ -599,21 +635,21 @@ local function display(obj)
         term.setTextColor(colors[obj.colors.fg.listTitle])
         io.write(cur.title)
 
-        term.setCursorPos(15, 5 + i)
+        term.setCursorPos(positions.nameLen + 3, 5 + i)
         term.setTextColor(colors[obj.colors.fg.listInfo])
         io.write(cur.info)
       elseif ctype == 2 then
         -- setting changer
         local set = settings.get(cur.setting)
-        if type(set) == "string" and string.len(set) > 25 then
-          set = set:sub(1, 22)
+        if type(set) == "string" and string.len(set) > positions.infoLen then
+          set = set:sub(1, positions.infoLen - 3)
           set = set .. "..."
         end
 
         term.setTextColor(colors[obj.colors.fg.listTitle])
         io.write(cur.title)
 
-        term.setCursorPos(15, 5 + i)
+        term.setCursorPos(positions.nameLen + 3, 5 + i)
         term.setTextColor(colors[obj.colors.fg.listInfo])
         if cur.tp == "string" or cur.tp == "number" then
           io.write(set or "Error: empty")
@@ -641,7 +677,7 @@ local function display(obj)
         io.write(cur.name)
 
         term.setTextColor(colors[obj.colors.fg.listInfo])
-        term.setCursorPos(15, 5 + i)
+        term.setCursorPos(positions.nameLen + 3, 5 + i)
         io.write(cur.info)
       elseif ctype ~= 0 then
         io.write("Broken.")
@@ -657,13 +693,13 @@ local function display(obj)
     io.write(selected.bigInfo)
 
     -- print the pointer
-    term.setCursorPos(1, 4 + pointer)
+    term.setCursorPos(1, positions.startY + pointer)
     term.setTextColor(colors[obj.colors.fg.selector])
     io.write(">")
 
     -- draw down arrow
-    term.setCursorPos(1, 9)
-    if pStart + 3 >= size(obj) + 1 then
+    term.setCursorPos(1, positions.startY + positions.items + 1)
+    if pStart + positions.items > size(obj) + 1 then
       term.setTextColor(colors[obj.colors.fg.arrowDisabled])
     else
       term.setTextColor(colors[obj.colors.fg.arrowEnabled])
@@ -671,7 +707,7 @@ local function display(obj)
     io.write(string.char(31))
 
     -- draw up arrow
-    term.setCursorPos(1, 4)
+    term.setCursorPos(1, positions.startY)
     if pStart > 1 then
       term.setTextColor(colors[obj.colors.fg.arrowEnabled])
     else
@@ -694,20 +730,21 @@ local function display(obj)
       end
       if sel < 1 then
         sel = size(obj) + 1
-        pointer = (size(obj) + 1) < 4 and (size(obj) + 1) or 4
-        pStart = sel - 3
+        pointer = (size(obj) + 1) < positions.items
+                  and (size(obj) + 1) or positions.items
+        pStart = sel - positions.items + 1
         if pStart < 1 then
           pStart = 1
         end
       end
     elseif key == keys.down then
       sel = sel + 1
-      if pointer == 4 then
+      if pointer == positions.items then
         pStart = pStart + 1
       end
       pointer = pointer + 1
-      if pointer > 4 then
-        pointer = 4
+      if pointer > positions.items then
+        pointer = positions.items
       end
       if sel > size(obj) + 1 then
         sel = 1
