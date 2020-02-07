@@ -325,9 +325,10 @@ local function checkPage(page)
         cerr(cur.store, "string", string.format(errorString, "store"))
         if cur.store ~= "plain"
           and cur.store ~= "sha256"
-          and cur.store ~= "sha256salt" then
+          and cur.store ~= "sha256salt"
+          and cur.store ~= "kristwallet" then
           error(string.format("Page %s, setting %d: store is not of allowed "
-                              .. "values (plain, sha256, sha256salt)",
+                              .. "values (plain, sha256, sha256salt, kristwallet)",
                               page.name, i), 2)
         elseif cur.store ~= "plain" then
           -- download requirements.
@@ -533,13 +534,23 @@ local function getPass(obj, set, p)
       -- between the password read and the hashing.
       local salt
 
-      if set.store == "sha256" or set.store == "sha256salt" then
+      if set.store == "sha256" or set.store == "sha256salt"
+        or set.store == "kristwallet" then
         local sha256 = require(".sha256")
+
         if set.store == "sha256salt" then
           salt = math.random(1, 100000)
           pass = tostring(salt) .. "," .. pass
         end
+        if set.store == "kristwallet" then
+          pass = "KRISTWALLET" .. pass
+        end
+
         pass = sha256.digest(pass):toHex()
+
+        if set.store == "kristwallet" then
+          pass = pass .. "-000"
+        end
       end
 
       return pass, salt
@@ -713,8 +724,12 @@ local function display(obj)
           io.write(set and string.format("%s (%d)", ccolors[set], set)
                    or "? (nil)")
         elseif cur.tp == "password" then
-          local cv = {plain = "Plaintext", sha256 = "sha256", sha256salt = "sha256 + salt"}
-          io.write(set and (pocket and cv[cur.store]) or "Stored as " .. cv[cur.store] or "Not yet set.")
+          local cv = {plain = "Plaintext", sha256 = "sha256", sha256salt = "sha256 + salt", kristwallet = "Kristwallet"}
+          if pocket then
+            io.write(set and cv[cur.store] or "Not yet set")
+          else
+            io.write(set and "Stored as " .. cv[cur.store] or "Not yet set")
+          end
         else
           io.write(pocket and "Unsupported" or "Unsupported type.")
         end

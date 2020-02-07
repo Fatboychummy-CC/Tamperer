@@ -92,6 +92,34 @@
       tp = "table",
       bigInfo = "Just a table (invalid) setting for this thing."
     },
+    {
+      setting = "shop.setting6",
+      title = "salt256",
+      tp = "password",
+      store = "sha256salt",
+      bigInfo = "A password thingymajig salty hash"
+    },
+    {
+      setting = "shop.setting7",
+      title = "sha256",
+      tp = "password",
+      store = "sha256",
+      bigInfo = "A password thingymajig hash"
+    },
+    {
+      setting = "shop.setting8",
+      title = "plain",
+      tp = "password",
+      store = "plain",
+      bigInfo = "A password thingymajig plain"
+    },
+    {
+      setting = shop.setting9",
+      title = "kwallet",
+      tp = "password",
+      store = "kristwallet",
+      bigInfo = "A password thingymajig kristwallet"
+    }
   },
   final = "Exit"
 }
