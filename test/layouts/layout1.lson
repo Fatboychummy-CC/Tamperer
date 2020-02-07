@@ -2,6 +2,7 @@
   name = "Test Base",
   info = "This is a test page.",
   bigInfo = "This is simply a test page for Simplify Shop",
+  platform = "computer",
   colors = {
     bg = {
       main = "black",

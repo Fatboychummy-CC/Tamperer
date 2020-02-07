@@ -209,6 +209,13 @@ local function checkPage(page)
 
   local errString = "Page " .. page.name .. ": %s is of wrong type."
 
+  cerr(page.platform, "string", string.format(errString, "platform"))
+  if pocket and page.platform ~= "pocket"
+    or turtle and page.platform ~= "turtle"
+    or not pocket and not turtle and
+      (page.platform == "pocket" or page.platform == "turtle") then
+    error("Menu is designed for a different platform (" .. page.platform .. ").", 2)
+  end
   cerr(page.info, "string", string.format(errString, "info"))
   clen(page.info, 25, "page.info")
 
@@ -626,7 +633,7 @@ local function display(obj)
           local cv = {plain = "Plaintext", }
           io.write(set and "Stored as " .. cv[cur.store] or "Not yet set.")
         else
-          io.write("Unsupported type.")
+          io.write(pocket and "Unsupported" or "Unsupported type.")
         end
       elseif ctype == 3 then
         -- subpage selection
@@ -721,6 +728,9 @@ local function display(obj)
         -- clone-downs
         if not cur.colors then
           cur.colors = obj.colors
+        end
+        if not cur.platform then
+          cur.platform = obj.platform
         end
         if not cur.settings then
           cur.settings = {location = obj.settings.location}

@@ -2,6 +2,7 @@
   name = "POCKET",
   info = "Pocket computer.",
   bigInfo = "This is simply a test page for Simplify Shop",
+  platform = "pocket",
   colors = {
     bg = {
       main = "black",

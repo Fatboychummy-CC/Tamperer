@@ -2,6 +2,7 @@
   name = "Shop Example",
   info = "Example shop menu",
   bigInfo = "This is an example page for the shop.",
+  platform = "turtle",
 
   colors = {
     bg = {
