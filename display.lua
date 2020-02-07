@@ -4,6 +4,7 @@
   TODO: cleanup
   TODO: more code comments
   TODO: idk
+  TODO: Password
 ]]
 
 --[[
