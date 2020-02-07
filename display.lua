@@ -1,12 +1,6 @@
 
 --[[
-  TODO: Un-hardcode values
-  TODO: Make nice for Computers, Turtles, and maybe Pocket Computers?
-    NOTE: Remove string length checking
-    NOTE: Add "platform" variable to the config.
-    NOTE: For each platform, display a different number of items per page.
   TODO: better color handling
-  TODO: do something with the defaults table
   TODO: cleanup
   TODO: more code comments
   TODO: idk
