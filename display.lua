@@ -61,6 +61,32 @@ for k, v in pairs(colours) do
   ccolors[v] = k
 end
 
+local function getRequiredFile(link, name)
+  term.clear()
+  term.setCursorPos(1, 1)
+  print("Grabbing a file that is required to display this page...")
+  print(link, "==>", name)
+  if fs.exists(name) then
+    print("Already downloaded.")
+    return
+  end
+  local h = http.get(link)
+  if h then
+    print("Connected.")
+    local dat = h.readAll()
+    h.close()
+    local h2 = io.open(name, 'w')
+    if h2 then
+      h2:write(dat):close()
+      print("Complete.")
+      os.sleep(0.5)
+    else
+      error("Failed to open " .. tostring(name) .. " for writing.", 2)
+    end
+  else
+    error("Failed to connect to " .. tostring(link), 2)
+  end
+end
 
 local function dread(def, readChar)
   def = def or ""
