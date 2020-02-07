@@ -20,6 +20,7 @@ Steps to reproduce the behavior:
 *Please include your config file.*
 *Please include the error.*
 ***FOR FUCKS SAKES INCLUDE THE LINE NUMBER IN THE ERROR***
+*Preferably including a screenshot of the error would be best.*
 
 **Expected behavior**
 A clear and concise description of what you expected to happen.
