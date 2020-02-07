@@ -2,19 +2,54 @@
 --[[
   TODO: Un-hardcode values
   TODO: Make nice for Computers, Turtles, and maybe Pocket Computers?
-    NOTE: Turtles are the "main audience" so making this work for turtles will
-          take priority.
+    NOTE: Remove string length checking
+    NOTE: Add "platform" variable to the config.
+    NOTE: For each platform, display a different number of items per page.
   TODO: better color handling
   TODO: do something with the defaults table
   TODO: cleanup
   TODO: more code comments
   TODO: idk
 ]]
--- requires
-local defaults = {
-  turtleX = 39,
-  turtleY = 13,
-}
+
+--[[ positions: stores vital locations that are to be used in place of hardcoded
+ locations
+
+  X: max size X
+  Y: max size Y
+  nameLen: Max length of an item name
+  infoLen: Max length of an item info
+  startY: start point for the menu, default to 4
+  bigY: bigInfo Y position, default to y-2
+]]
+
+local positions = {}
+positions.X, positions.Y = term.getSize()
+positions.bigY = positions.Y - 2
+positions.startY = 4
+
+-- Mode selector, for quick comparison of what type of display we are using.
+local mode = 0
+if pocket then
+  -- pocket mode
+  mode = 1
+
+  positions.nameLen = 8
+  positions.infoLen = 16
+
+elseif turtle then
+  -- turtle  mode
+  mode = 2
+
+  positions.nameLen = 12
+  positions.infoLen = 25
+else
+  -- computer mode
+  mode = 3
+
+  positions.nameLen = 16
+  positions.infoLen = 32
+end
 
 local ccolors = {}
 for k, v in pairs(colors) do
@@ -178,7 +213,7 @@ local function checkPage(page)
   clen(page.info, 25, "page.info")
 
   cerr(page.bigInfo, "string", string.format(errString, "bigInfo"))
-  clen(page.bigInfo, defaults.turtleX * 3 - 10, "page.bigInfo")
+  clen(page.bigInfo, positions.X * 3 - 10, "page.bigInfo")
 
   cerr(page.colors, "table", string.format(errString, "colors"))
   cerr(page.colors.bg, "table", string.format(errString, "colors.bg"))
@@ -205,7 +240,7 @@ local function checkPage(page)
       clen(cur.info, 25, string.format(lenString, "info"))
 
       cerr(cur.bigInfo, "string", string.format(errorString, "bigInfo"))
-      clen(cur.bigInfo, defaults.turtleX * 3 - 10, string.format(lenString, "bigInfo"))
+      clen(cur.bigInfo, positions.X * 3 - 10, string.format(lenString, "bigInfo"))
     end
   else
     page.selections = {}
@@ -221,7 +256,7 @@ local function checkPage(page)
       clen(cur.title, 12, "title")
 
       cerr(cur.bigInfo, "string", string.format(errorString, "bigInfo"))
-      clen(cur.bigInfo, defaults.turtleX * 3 - 10, string.format(lenString, "bigInfo"))
+      clen(cur.bigInfo, positions.X * 3 - 10, string.format(lenString, "bigInfo"))
 
       cerr(cur.setting, "string", string.format(errorString, "setting"))
 
@@ -611,7 +646,7 @@ local function display(obj)
 
     -- print the info of the selected item
     term.setTextColor(colors[obj.colors.fg.bigInfo])
-    term.setCursorPos(1, defaults.turtleY - 2)
+    term.setCursorPos(1, positions.Y - 2)
     io.write(selected.bigInfo)
 
     -- print the pointer
