@@ -1,10 +1,15 @@
-
 --[[
+  Tamperer, by fatboychummy.
+  A simple GUI creator where you make quick GUIs by making a lson table
+
+  Sha256 API included (when required) created by Anavrins: https://pastebin.com/6UV4qfNF
+
+
+
   TODO: better color handling
   TODO: cleanup
   TODO: more code comments
-  TODO: idk
-  TODO: Password
+  TODO: Better name for the "positions" table
 ]]
 
 --[[
@@ -61,25 +66,31 @@ for k, v in pairs(colours) do
   ccolors[v] = k
 end
 
+-- grab a file from link, and put into file named name
 local function getRequiredFile(link, name)
   term.clear()
   term.setCursorPos(1, 1)
   print("Grabbing a file that is required to display this page...")
   print(link, "==>", name)
+
+  -- it's already here, exit.
   if fs.exists(name) then
-    print("Already downloaded.")
     return
   end
-  local h = http.get(link)
+
+  -- download the file
+  local h = http.get(link) -- connect to link
   if h then
     print("Connected.")
-    local dat = h.readAll()
+    local dat = h.readAll() -- read the data
     h.close()
+
+    -- open the local file
     local h2 = io.open(name, 'w')
     if h2 then
+      -- write the local file
       h2:write(dat):close()
       print("Complete.")
-      os.sleep(0.5)
     else
       error("Failed to open " .. tostring(name) .. " for writing.", 2)
     end
@@ -88,6 +99,13 @@ local function getRequiredFile(link, name)
   end
 end
 
+--[[
+  "Default" read
+  Like read or io.read, but allows you to set an initial value.
+  (Also the insert key allows to swap from insert to overwrite)
+
+  readChar is for passwords, set it to "*" or whatever floats your boat.
+]]
 local function dread(def, readChar)
   def = def or ""
   local pos = string.len(def) + 1
@@ -99,7 +117,10 @@ local function dread(def, readChar)
 
   term.setCursorBlink(true)
 
+  -- main loop
   while true do
+    -- if readChar is enabled, display it as a bunch of those characters.
+    -- otherwise leave it as is.
     local disp = type(readChar) == "string" and string.rep(readChar:sub(1, 1), string.len(def)) or def
     -- draw --
 
@@ -147,7 +168,7 @@ local function dread(def, readChar)
     elseif event == "key" then
       local key = ev[2]
 
-      if key == keys.backspace then
+      if key == keys.backspace then -- remove a character from left of current position
         local ps = pos - 2
 
         if pos - 2 < 0 then
@@ -159,27 +180,27 @@ local function dread(def, readChar)
         if pos < 1 then
           pos = 1
         end
-      elseif key == keys.enter then
+      elseif key == keys.enter then -- return what is input
         term.setCursorBlink(false)
         print()
         return def
-      elseif key == keys.right then
+      elseif key == keys.right then -- move position to the right
         pos = pos + 1
         if pos > string.len(def) + 1 then
           pos = string.len(def) + 1
         end
-      elseif key == keys.left then
+      elseif key == keys.left then -- move position to the left
         pos = pos - 1
         if pos < 1 then
           pos = 1
         end
-      elseif key == keys.up then
+      elseif key == keys.up then -- jump to the beginning
         pos = 1
-      elseif key == keys.down then
+      elseif key == keys.down then -- jump to the end
         pos = string.len(def) + 1
-      elseif key == keys.delete then
+      elseif key == keys.delete then -- remove a character from right of current position
         def = string.sub(def, 1, pos - 1) .. string.sub(def, pos + 1)
-      elseif key == keys.insert then
+      elseif key == keys.insert then -- swap between insert/overwrite modes
         if ins then
           ins = false
           term.setCursorBlink(true)
@@ -192,7 +213,7 @@ local function dread(def, readChar)
           tmr = os.startTimer(0.4)
         end
       end
-    elseif event == "timer" then
+    elseif event == "timer" then -- if in insert mode, blink the full character.
       local tm = ev[2]
       if tm == tmr then
         bOn = not bOn
@@ -221,12 +242,9 @@ end
 
 -- check the page for errors
 local function checkPage(page)
-  -- the readability of this function is horrifying
-
-  -- length of titles/pagenames: 12
-  -- length of infos:            25
-  -- length of bigInfos:         defX * 3
-
+  -- the readability of this function at first glance is horrifying
+  -- however, it should be really simple, once you look at it for more than
+  -- 0.1 nanoseconds.  I won't comment on it.
 
   cerr(page, "table", "Page layout is not a table.")
 
@@ -396,6 +414,7 @@ local function size(obj)
   return #obj.selections + #obj.settings + #obj.subPages
 end
 
+-- read a number.
 local function readNumber(obj, set, p)
   local str = tostring(settings.get(set.setting))
   local mx, my = term.getSize()
@@ -403,10 +422,11 @@ local function readNumber(obj, set, p)
   if str == "nil" then str = "0" end
 
   while true do
+    -- set cursor to where it needs to be
     term.setCursorPos(positions.nameLen + 3, positions.startY + p)
     io.write(string.rep(' ', mx - 14))
     term.setCursorPos(positions.nameLen + 3, positions.startY + p)
-    local inp = tonumber(dread(str))
+    local inp = tonumber(dread(str)) -- read the input, attempt to convert to number
 
     if not inp then
       -- NaN
@@ -447,6 +467,8 @@ local function readNumber(obj, set, p)
         str = tostring(set.max)
       end
 
+      -- if all was good, return the number.  Else, an error was displayed.
+      -- Sleep for 2 seconds to let the user read it.
       if ok then
         return inp
       else
@@ -456,6 +478,7 @@ local function readNumber(obj, set, p)
   end
 end
 
+-- Read a color.  Accepts be "gray" or "grey", or "128".
 local function readColor(obj, set, p)
   local str = tostring(ccolors[settings.get(set.setting)])
   local mx, my = term.getSize()
@@ -506,6 +529,7 @@ local function getPass(obj, set, p)
   local mx, my = term.getSize()
 
   while true do
+    -- get user initial input
     term.setCursorPos(2, positions.startY + p)
     io.write(string.rep(' ', mx - 1))
     term.setCursorPos(2, positions.startY + p)
@@ -517,6 +541,7 @@ local function getPass(obj, set, p)
     term.setTextColor(ccolors[obj.colors.fg.input])
     local pass = dread("", '*')
 
+    -- get the user to repeat the password to make sure no typos
     term.setCursorPos(2, positions.startY + p)
     io.write(string.rep(' ', mx - 1))
     term.setCursorPos(2, positions.startY + p)
@@ -536,18 +561,26 @@ local function getPass(obj, set, p)
 
       if set.store == "sha256" or set.store == "sha256salt"
         or set.store == "kristwallet" then
+        -- grab the sha256 lib
+        -- Requiring here should be okay to do, I doubt there'll be more than
+        -- one password per page so it won't affect speed or anything.
         local sha256 = require(".sha256")
 
+        -- if we want to salt it, generate a salt.
         if set.store == "sha256salt" then
           salt = math.random(1, 100000)
           pass = tostring(salt) .. "," .. pass
         end
+
+        -- if it's a kristwallet format, insert the kristwallet salt.
         if set.store == "kristwallet" then
           pass = "KRISTWALLET" .. pass
         end
 
+        -- convert to sha256, then to characters that are human-readable.
         pass = sha256.digest(pass):toHex()
 
+        -- if it's a kristwallet, append -000 in kristwallet fashion
         if set.store == "kristwallet" then
           pass = pass .. "-000"
         end
@@ -555,6 +588,7 @@ local function getPass(obj, set, p)
 
       return pass, salt
     else
+      -- the passwords did not match (typo or something else)
       term.setCursorPos(positions.nameLen + 3, positions.startY + p)
       io.write(string.rep(' ', mx - 14))
       term.setCursorPos(positions.nameLen + 3, positions.startY + p)
@@ -570,7 +604,7 @@ end
 -- ask the user if they are sure they want to edit the password
 local function askPass(obj, set, p)
   local mx, my = term.getSize()
-  local affirm = false
+  local confirm = false
 
   term.setTextColor(ccolors[obj.colors.fg.listTitle])
 
@@ -581,18 +615,19 @@ local function askPass(obj, set, p)
 
 
   while true do
+    -- get the user to confirm they want to change the password
     term.setCursorPos(positions.nameLen + 3, positions.startY + p)
     io.write(string.rep(' ', mx - 14))
     term.setCursorPos(positions.nameLen + 3, positions.startY + p)
     term.setTextColor(ccolors[obj.colors.fg.input])
-    io.write(affirm and "[ YES ] NO" or "  YES [ NO ]")
+    io.write(confirm and "[ YES ] NO" or "  YES [ NO ]")
 
     local ev, key = os.pullEvent("key")
 
     if key == keys.right or key == keys.left or key == keys.tab then
-      affirm = not affirm
+      confirm = not confirm
     elseif key == keys.enter then
-      return affirm
+      return confirm
     end
   end
 end
@@ -609,8 +644,8 @@ local function edit(obj, i, p)
   term.setTextColor(colors[obj.colors.fg.input])
 
   -- handle the editing
+  -- get an x input, with the input starting with the currently set setting
   if set.tp == "string" then
-    -- get a string input, with the input starting with the currently set setting
     settings.set(set.setting, dread(settings.get(set.setting)))
     settings.save(obj.settings.location)
   elseif set.tp == "number" then
@@ -642,6 +677,7 @@ local function edit(obj, i, p)
       settings.save(obj.settings.location)
     end
   else
+    -- if the type is uneditable, say it's uneditable.
     local col = term.getTextColor()
     term.setTextColor(ccolors[obj.colors.fg.error])
     io.write(string.format("Cannot edit type '%s'.", set.tp))
@@ -777,54 +813,52 @@ local function display(obj)
     end
     io.write(string.char(30))
 
+    -- the pointer and page display shit
     local ev, key = os.pullEvent("key")
-    if key == keys.up then
-      sel = sel - 1
-      if pointer == 1 then
+    if key == keys.up then -- if you press upArrow...
+      sel = sel - 1 -- move the selected item up one
+      if pointer == 1 then -- if the pointer is at 1, scroll up.
         pStart = pStart - 1
       end
-      if pStart < 1 then
+      if pStart < 1 then -- if we've scrolled up too far, set the scroll back to where it was.
         pStart = 1
       end
-      pointer = pointer - 1
-      if pointer < 1 then
+      pointer = pointer - 1 -- move the pointer up a slot
+      if pointer < 1 then -- if the pointer is too high, set the pointer back to the top.
         pointer = 1
       end
-      if sel < 1 then
-        sel = size(obj) + 1
+      if sel < 1 then -- if we've reached the tippy top of the ladder
+        sel = size(obj) + 1 -- select the very bottom item
         pointer = (size(obj) + 1) < positions.items
-                  and (size(obj) + 1) or positions.items
-        pStart = sel - positions.items + 1
+                  and (size(obj) + 1) or positions.items -- move the pointer to the bottom
+        pStart = sel - positions.items + 1 -- scroll down to the bottom
         if pStart < 1 then
-          pStart = 1
+          pStart = 1 -- then make sure we didn't scroll up after we tried to scroll down.
         end
       end
-    elseif key == keys.down then
-      sel = sel + 1
-      if pointer == positions.items then
-        pStart = pStart + 1
+    elseif key == keys.down then -- if you press downArrow...
+      sel = sel + 1 -- move the selected item down one
+      if pointer == positions.items then -- if the pointer is at the bottom
+        pStart = pStart + 1 -- scroll down
       end
-      pointer = pointer + 1
-      if pointer > positions.items then
-        pointer = positions.items
+      pointer = pointer + 1 -- move the pointer down
+      if pointer > positions.items then -- if the pointer is now too far down...
+        pointer = positions.items -- move it back up to the bottom
       end
-      if sel > size(obj) + 1 then
-        sel = 1
-        pStart = 1
-        pointer = 1
+      if sel > size(obj) + 1 then -- if we've scrolled past the bottom
+        sel = 1 -- select the very top item
+        pStart = 1 -- scroll up
+        pointer = 1 -- set the pointer to be the very first item.
       end
-    elseif key == keys.enter then
-      if seltp == 1 then
-        -- selection
-        return sel
-      elseif seltp == 2 then
-        -- setting
-        edit(obj, sel, pointer)
-      elseif seltp == 3 then
-        -- subPage
+    elseif key == keys.enter then -- if we press enter...
+      if seltp == 1 then -- item type is a selectable item
+        return sel -- return the selected item number
+      elseif seltp == 2 then -- item type is a setting
+        edit(obj, sel, pointer) -- edit the setting
+      elseif seltp == 3 then -- item type is a subPage
         -- get the page
         local i, cur = iter(obj, sel)
-        -- clone-downs
+        -- clone-down certain items that don't need to be in every subpage
         if not cur.colors then
           cur.colors = obj.colors
         end
