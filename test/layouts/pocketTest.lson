@@ -1,0 +1,96 @@
+{
+  name = "POCKET",
+  info = "Pocket computer.",
+  bigInfo = "This is simply a test page for Simplify Shop",
+  colors = {
+    bg = {
+      main = "black",
+    },
+    fg = {
+      main = "white",
+      title = "yellow",
+      info = "lightGray",
+      listInfo = "gray",
+      listTitle = "white",
+      bigInfo = "lightGray",
+      selector = "yellow",
+      arrowDisabled = "gray",
+      arrowEnabled = "white",
+      input = "yellow",
+      error = "red",
+    }
+  },
+  selections = {
+    {
+      title = "Select 1",
+      info = "First selection",
+      bigInfo = "Select the first thing and return 1"
+    },
+    {
+      title = "Select 2",
+      info = "Second selection",
+      bigInfo = "Select the second thing and return 2"
+    },
+    {
+      title = "Select 3",
+      info = "Third selection",
+      bigInfo = "A really long big info here just to test the maximum length of things so y'know.  Oh, this will return 3."
+    },
+  },
+  settings = {
+    location = ".shopSettings",
+    {
+      setting = "shop.setting1",
+      title = "Shop 1",
+      tp = "string",
+      bigInfo = "Just a string setting for this thing."
+    },
+    {
+      setting = "shop.setting2",
+      title = "Shop 2",
+      tp = "number",
+      bigInfo = "Just a number setting for this thing."
+    },
+    {
+      setting = "shop.setting2.1",
+      title = "Shop 2.1",
+      tp = "number",
+      bigInfo = "Just a number with min setting for this thing.",
+      min = 3
+    },
+    {
+      setting = "shop.setting2.2",
+      title = "Shop 2.2",
+      tp = "number",
+      bigInfo = "Just a number with max setting for this thing.",
+      max = 17
+    },
+    {
+      setting = "shop.setting2.3",
+      title = "Shop 2.3",
+      tp = "number",
+      bigInfo = "Just a number with min and max setting for this thing.",
+      min = 14,
+      max = 24
+    },
+    {
+      setting = "shop.setting3",
+      title = "Shop 3",
+      tp = "color",
+      bigInfo = "Just a color setting for this thing."
+    },
+    {
+      setting = "shop.setting4",
+      title = "Shop 4",
+      tp = "boolean",
+      bigInfo = "Just a boolean setting for this thing."
+    },
+    {
+      setting = "shop.setting5",
+      title = "Shop 5",
+      tp = "table",
+      bigInfo = "Just a table (invalid) setting for this thing."
+    },
+  },
+  final = "Exit"
+}
