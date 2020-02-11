@@ -687,7 +687,10 @@ local function edit(obj, i, p)
 end
 
 -- display the page
-local function display(obj)
+-- obj: the page to be displayed
+-- I_ABSOLUTELY_KNOW_WHAT_I_AM_DOING: Set to true, will skip error checking.
+--    Warning: Only do this if you absolutely know what you are doing.
+local function display(obj, I_ABSOLUTELY_KNOW_WHAT_I_AM_DOING)
   -- DEVNOTE: colors "push" themselves downstream
 
   local sel = 1
@@ -696,7 +699,10 @@ local function display(obj)
   local over = {}
 
   -- check that the page is OK
-  checkPage(obj)
+  if not I_ABSOLUTELY_KNOW_WHAT_I_AM_DOING then
+    checkPage(obj)
+  end
+
   if not obj.settings.location then
     obj.settings.location = ".settings"
   end
@@ -873,7 +879,7 @@ local function display(obj)
         end
 
         -- run the sub page
-        display(cur)
+        display(cur, I_ABSOLUTELY_KNOW_WHAT_I_AM_DOING)
       end
     end
   end
