@@ -1,6 +1,6 @@
 {
-  name = "info",
-  info = "info",
+  name = "Name of page",
+  info = "Short descriptive information about page",
   bigInfo = "bigInfo",
   platform = "computer",
   colors = {
@@ -23,9 +23,9 @@
   },
   selections = {
     {
-      title = "title",
-      info = "info",
-      bigInfo = "bigInfo"
+      title = "Short title",
+      info = "Information about this selectable",
+      bigInfo = "Long information that explains what happens when you select this item and press enter."
     },
   },
   final = "Exit"
