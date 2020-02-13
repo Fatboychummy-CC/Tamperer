@@ -1,0 +1,32 @@
+{
+  name = "info",
+  info = "info",
+  bigInfo = "bigInfo",
+  platform = "computer",
+  colors = {
+    bg = {
+      main = "black",
+    },
+    fg = {
+      main = "white",
+      title = "yellow",
+      info = "lightGray",
+      listInfo = "gray",
+      listTitle = "white",
+      bigInfo = "lightGray",
+      selector = "yellow",
+      arrowDisabled = "gray",
+      arrowEnabled = "white",
+      input = "yellow",
+      error = "red",
+    }
+  },
+  selections = {
+    {
+      title = "title",
+      info = "info",
+      bigInfo = "bigInfo"
+    },
+  },
+  final = "Exit"
+}
