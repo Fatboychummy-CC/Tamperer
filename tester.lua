@@ -1,5 +1,5 @@
 -- requires
-local display = require(".display")
+local display = require(".minified")
 
 -- user data
 local layoutsFolder = "/test/layouts/"

@@ -23,10 +23,15 @@
   },
   selections = {
     {
-      title = "Short title",
-      info = "Information about this topic.",
-      bigInfo = "Long information that explains what happens when you select this item and press enter."
+      title = "Selection 1",
+      info = "Information 1",
+      bigInfo = "Information for selection 1.  Will return 1 when selected."
     },
+    {
+      title = "Selection 2",
+      info = "Information 2",
+      bigInfo = "Information for selection 2.  Will return 2 when selected."
+    }
   },
   final = "Exit"
 }
