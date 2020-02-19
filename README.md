@@ -1,7 +1,7 @@
 # Tamperer
 Tamperer allows you to make quick settings menus with support for strings, numbers, booleans, and colors.  Supports subpages as well.
 
-Download `display.lua` then hop over to the [wiki](https://github.com/fatboychummy/Tamperer/wiki) to get started!
+Hop over to the [wiki](https://github.com/fatboychummy/Tamperer/wiki) to get started!
 
 # Credits:
 * Anavrins
