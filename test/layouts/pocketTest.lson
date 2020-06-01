@@ -114,7 +114,7 @@
       bigInfo = "A password thingymajig plain"
     },
     {
-      setting = shop.setting9",
+      setting = "shop.setting9",
       title = "kwallet",
       tp = "password",
       store = "kristwallet",
