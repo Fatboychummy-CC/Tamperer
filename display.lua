@@ -306,10 +306,10 @@ local function checkPage(page)
   -- nil/number/string.depends(x=string(bla)).choices(x,y,z)
   local split = "[^/]+"
   local depends = "%.depends%((.+)=(.+)%((.+)%)%)"
-  local choices = "%.choices%(.-%)"
+  local choices = "%.choices%((.-)%)"
   local choicesSplit = "[^,]+"
   local function formatTypes(name, key, types, got)
-    return string.format("Page '%s': '%s': Expected '%s', got '%s'.", name, key, type(types) == "string" and types or table.concat(types, "/"), got)
+    return string.format("Section '%s': '%s': Expected '%s', got '%s'.", name, key, type(types) == "string" and types or table.concat(types, "/"), got)
   end
 
   local function check(tbl, name, format2)
@@ -334,6 +334,8 @@ local function checkPage(page)
           -- recurse
           print("Recurse.", k, tbl[k])
           check(tbl[k], name .. "." .. tostring(k), v)
+        else
+          tbl[k] = {}
         end
       else
         -- handle any other type.
@@ -357,13 +359,78 @@ local function checkPage(page)
           -- check if choices
           local cs = current:match(choices)
 
-          if dKey then
-            print("##dependency")
+          -- check if the type matches
+          local tOK = false
+          local firstDot = current:find("%.")
+          local tp = current
+          if firstDot then
+            tp = current:sub(1, firstDot - 1)
+          end
+          if type(tbl[k]) == tp then
+            tOK = true
           end
 
+          -- check for dependencies and if they match.
+          local dOK = false
+          if dKey then
+            -- if dkey, then a dependency exists.  tbl[dkey] should be of type dtype, with value dval.
+            print("##dependency")
+            if dType == "number" then
+              dVal = tonumber(dVal)
+            elseif dType == "password" then
+              error(string.format("Section '%s': '%s': Cannot depend on password!", name, k))
+            end
+            if tbl[dKey] and type(tbl[dKey]) == dType and tbl[dKey] == dVal then
+              dOK = true
+            end
+          else
+            dOK = true
+          end
+
+          -- check for choices and if they match
+          local cOK = false
           if cs then
             print("##choices")
+            local tCs = {}
+            for match in cs:gmatch(choicesSplit) do
+              tCs[#tCs + 1] = match
+            end
+
+            for i = 1, #tCs do
+              if tp == "number" then
+                tCs[i] = tonumber(tCs[i])
+              end
+              if tCs[i] == tbl[k] then
+                cOK = true
+                break
+              end
+            end
+          else
+            cOK = true
           end
+
+          -- if all checks are ok, we are good.
+          if dOK and cOK and tOK then
+            ok = true
+            break
+          end
+          if tOK and not dOK then
+            error(string.format(
+              "Section '%s': '%s': Dependency not met ('%s' must be of type '%s', and with value '%s').",
+              name, k,
+              dKey, dType, dVal
+            ))
+          end
+          if tOK and not cOK then
+            error(string.format(
+              "Section '%s': '%s': Choices allowed: %s (got %s).",
+              name, k,
+              cs, tbl[k]
+            ))
+          end
+        end
+        if not ok then
+
         end
       end
     end
