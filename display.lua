@@ -71,8 +71,9 @@ end
   -- .choices(x,y,z)         > allow only the following choices for this value
   -- .depends(x=type(value)) > setting this value depends on value x being of type type and value value
   -- .len(x)                 > maximum length of string.
-  -- ["?"] > iterative
-  -- ["!"] > table not required.
+  -- ["?"]         > iterative
+  -- ["!"] = true  > table not required.
+  -- ["!"] = false > table required, but only check on first-level.
 ]]
 local format = {
   name     = "string",
@@ -81,6 +82,7 @@ local format = {
   platform = "string.choices(all,turtle,pocket,computer)",
 
   colors = {
+    ["!"] = false,
     bg = {
       main = "color"
     },
