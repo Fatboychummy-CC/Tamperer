@@ -306,44 +306,35 @@ local function checkPage(page)
     for k, v in pairs(format2 or format) do
       if k == "?" then
         -- handle iterative items (1,2,3,4,5,6) where all are similar
-        print("Iterative ignored.")
         for i = 1, #tbl do
           check(tbl[i], string.format("%s[%d]", name, i), v)
         end
       elseif k == "!" then
         -- extra statement to block the else from receiving !
-        print("Non-Requirement.")
       elseif type(v) == "table" then
         if type(tbl[k]) ~= "table" and type(v["!"]) ~= "boolean" then
           -- if not a table AND required, error.
-          print(textutils.serialize(tbl))
           error(formatTypes(name, k, "table", type(tbl[k])))
         elseif type(v["!"]) == "boolean" and not v["!"] and format2 then
           -- catch to stop from checking if at depth
         elseif type(tbl[k]) == "table" then
           -- recurse
-          print("Recurse.", k, tbl[k])
           check(tbl[k], name .. "." .. tostring(k), v)
         else
           tbl[k] = {}
         end
       else
         -- handle any other type.
-        print("Other.", v)
-
         -- get types allowed by splitting the string
-        print("Split.")
         local types = {}
         for match in v:gmatch(split) do
           types[#types + 1] = match
         end
 
         -- check for presence of matching type and proper dependencies (if any)
-        print("Check")
         local ok = false
         for i = 1, #types do
           local current = types[i]
-          print("  " .. current)
           -- check if dependencies
           local dKey, dType, dVal = current:match(depends)
           -- check if choices
@@ -364,7 +355,6 @@ local function checkPage(page)
           local dOK = false
           if dKey then
             -- if dkey, then a dependency exists.  tbl[dkey] should be of type dtype, with value dval.
-            print("##dependency")
             if dType == "number" then
               dVal = tonumber(dVal)
             elseif dType == "password" then
@@ -380,7 +370,6 @@ local function checkPage(page)
           -- check for choices and if they match
           local cOK = false
           if cs then
-            print("##choices")
             local tCs = {}
             for match in cs:gmatch(choicesSplit) do
               tCs[#tCs + 1] = match
