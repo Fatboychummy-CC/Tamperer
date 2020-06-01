@@ -10,6 +10,8 @@
   TODO: cleanup
   TODO: more code comments
   TODO: Better name for the "positions" table
+
+  TODO: Fix check seeing colors as a string.
 ]]
 
 --[[
