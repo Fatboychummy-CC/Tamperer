@@ -323,7 +323,7 @@ local function checkPage(page)
         -- handle iterative items (1,2,3,4,5,6) where all are similar
         print("Iterative ignored.")
       elseif k == "!" then
-        -- extra statement to block the else from receiving ! 
+        -- extra statement to block the else from receiving !
         print("Non-Requirement.")
       elseif type(v) == "table" then
         if type(tbl[k]) ~= "table" and not v["!"] then
