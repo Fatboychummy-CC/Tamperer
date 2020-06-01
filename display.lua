@@ -418,12 +418,7 @@ local function checkPage(page)
       end
     end
   end
-
-  term.clear()
-  term.setCursorPos(1, 1)
   check(page, page.name)
-  print("Done.")
-  os.sleep(10)
   term.clear()
 end
 
