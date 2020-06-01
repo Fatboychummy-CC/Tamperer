@@ -71,6 +71,8 @@ end
   -- .choices(x,y,z)         > allow only the following choices for this value
   -- .depends(x=type(value)) > setting this value depends on value x being of type type and value value
   -- .len(x)                 > maximum length of string.
+  -- ["?"] > iterative
+  -- ["!"] > table not required.
 ]]
 local format = {
   name     = "string",
@@ -97,6 +99,7 @@ local format = {
     }
   },
   selections = {
+    ["!"] = true,
     ["?"] = {
       title   = "string",
       info    = "string",
@@ -104,6 +107,7 @@ local format = {
     }
   },
   settings = {
+    ["!"] = true,
     location = "string",
     ["?"] = {
       setting = "string",
@@ -119,6 +123,7 @@ local format = {
 }
 
 format.subPages = {
+  ["!"] = true,
   ["?"] = format
 }
 
