@@ -66,6 +66,62 @@ for k, v in pairs(colours) do
   ccolors[v] = k
 end
 
+--[[
+  format table with data we can check easily later.
+  -- .choices(x,y,z)         > allow only the following choices for this value
+  -- .depends(x=type(value)) > setting this value depends on value x being of type type and value value
+  -- .len(x)                 > maximum length of string.
+]]
+local format = {
+  name     = "string",
+  info     = "string",
+  bigInfo  = "string",
+  platform = "string.choices(all,turtle,pocket,standard,turtleAdvanced,pocketAdvanced,standardAdvanced)",
+
+  colors = {
+    bg = {
+      main = "color"
+    },
+    fg = {
+      main          = "color",
+      title         = "color",
+      info          = "color",
+      listInfo      = "color",
+      listTitle     = "color",
+      bigInfo       = "color",
+      selector      = "color",
+      arrowDisabled = "color",
+      arrowEnabled  = "color",
+      input         = "color",
+      error         = "color",
+    }
+  },
+  selections = {
+    ["?"] = {
+      title   = "string",
+      info    = "string",
+      bigInfo = "string"
+    }
+  },
+  settings = {
+    location = "string",
+    ["?"] = {
+      setting = "string",
+      title   = "string",
+      tp      = "string.choices(string,number,color,password,boolean)",
+      bigInfo = "string",
+      min     = "nil/number.depends(tp=string(number))",
+      max     = "nil/number.depends(tp=string(number))",
+      store   = "nil/string.depends(tp=string(password)).choices(plain,sha256,sha256salt,kristwallet)"
+    }
+  },
+  final = "nil/string"
+}
+
+format.subPages = {
+  ["?"] = format
+}
+
 -- grab a file from link, and put into file named name
 local function getRequiredFile(link, name)
   term.clear()
