@@ -78,7 +78,7 @@ local format = {
   name     = "string",
   info     = "string",
   bigInfo  = "string",
-  platform = "string.choices(all,turtle,pocket,standard,turtleAdvanced,pocketAdvanced,standardAdvanced)",
+  platform = "string.choices(all,turtle,pocket,computer)",
 
   colors = {
     bg = {
