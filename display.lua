@@ -307,14 +307,19 @@ local function checkPage(page)
       if k == "?" then
         -- handle iterative items (1,2,3,4,5,6) where all are similar
         print("Iterative ignored.")
+        for i = 1, #tbl do
+          check(tbl[i], string.format("%s[%d]", name, i), v)
+        end
       elseif k == "!" then
         -- extra statement to block the else from receiving !
         print("Non-Requirement.")
       elseif type(v) == "table" then
-        if type(tbl[k]) ~= "table" and not v["!"] then
+        if type(tbl[k]) ~= "table" and type(v["!"]) ~= "boolean" then
           -- if not a table AND required, error.
           print(textutils.serialize(tbl))
           error(formatTypes(name, k, "table", type(tbl[k])))
+        elseif type(v["!"]) == "boolean" and not v["!"] and format2 then
+          -- catch to stop from checking if at depth
         elseif type(tbl[k]) == "table" then
           -- recurse
           print("Recurse.", k, tbl[k])
@@ -399,6 +404,8 @@ local function checkPage(page)
             ok = true
             break
           end
+
+          -- if the type is good, but a dependency is unmet
           if tOK and not dOK then
             error(string.format(
               "Section '%s': '%s': Dependency not met ('%s' must be of type '%s', and with value '%s').",
@@ -406,16 +413,23 @@ local function checkPage(page)
               dKey, dType, dVal
             ))
           end
+
+          -- if the type is good, but a choice is wrong
           if tOK and not cOK then
             error(string.format(
-              "Section '%s': '%s': Choices allowed: %s (got %s).",
+              "Section '%s': '%s': Choices allowed: %s (got '%s').",
               name, k,
               cs, tbl[k]
             ))
           end
         end
-        if not ok then
 
+        -- if nothing is ok
+        if not ok then
+          error(string.format("Section '%s': '%s': Expected '%s', got '%s'.",
+            name, k,
+            v, type(tbl[k]))
+          )
         end
       end
     end
@@ -929,4 +943,23 @@ local function display(obj, I_ABSOLUTELY_KNOW_WHAT_I_AM_DOING)
   os.sleep(30)
 end
 
-return display
+local function displayFile(filename)
+  local h = io.open(filename, 'r')
+  if h then
+    local data = h:read("*a")
+    h:close()
+
+    local obj, err = load("return " .. tostring(data), filename)
+    if not obj then
+      error(err, 2)
+    end
+    display(obj())
+  else
+    error(string.format("No file '%s'.", filename), 2)
+  end
+end
+
+return {
+  display = display,
+  displayFile = displayFile
+}
