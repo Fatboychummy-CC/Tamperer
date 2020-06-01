@@ -1,5 +1,5 @@
 -- requires
-local display = require(".minified")
+local tamperer = require("display")
 
 -- user data
 local layoutsFolder = "/test/layouts/"
@@ -26,8 +26,11 @@ fileIn:close()
 fileIn = nil
 
 -- run the page
-local ok, err = pcall(display, data)
-
+local ok, err = pcall(tamperer.displayFile, layoutsFolder .. layouts[inp])
+if not ok then
+  io.write("!")
+  os.sleep(5)
+end
 -- clear and set cursor pos to 1, 1
 term.setBackgroundColor(colors.black)
 term.setTextColor(colors.white)
