@@ -284,23 +284,6 @@ local function dread(def, readChar)
   end
 end
 
--- create error if variable a is not of type b
-local function cerr(a, b, err, lvl)
-  if type(a) ~= b then
-    error(err .. " (expected " .. b .. ", got " .. type(a) .. ")",
-          lvl and lvl + 1 or 3)
-  end
-end
-
--- create error if length of string 'a' is greater than a max 'b'
-local function clen(a, b, name, lvl)
-  if type(a) ~= "string" then error("Check failure: not string", 2) end
-  if string.len(a) > b then
-    error("Page layout string " .. name .. " is too long (max: " .. tostring(b)
-          .. ", at: " .. tostring(string.len(a)) .. ")", lvl and lvl + 1 or 3)
-  end
-end
-
 -- check the page for errors
 local function checkPage(page)
   -- nil/number/string.depends(x=string(bla)).choices(x,y,z)
