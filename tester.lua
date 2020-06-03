@@ -25,8 +25,24 @@ local data = textutils.unserialize(fileIn:read("*a"))
 fileIn:close()
 fileIn = nil
 
+local function callback(filename, setting, newValue, obj)
+  term.setBackgroundColor(colors.black)
+  term.setTextColor(colors.white)
+  term.clear()
+  term.setCursorPos(1, 1)
+  local function pf(...)
+    print(string.format(...))
+  end
+
+  pf("Filename       : %s", filename)
+  pf("Setting Changed: %s", setting)
+  pf("New value set  : %s", newValue)
+  pf("OBJ            : %s", obj)
+  os.sleep(3)
+end
+
 -- run the page
-local ok, err = pcall(tamperer.displayFile, layoutsFolder .. layouts[inp])
+local ok, err = pcall(tamperer.displayFile, layoutsFolder .. layouts[inp], callback)
 if not ok then
   io.write("!")
   os.sleep(5)
