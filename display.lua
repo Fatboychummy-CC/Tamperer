@@ -933,7 +933,7 @@ local function displayFile(sFilename, fCallback)
     if not tObj then
       error(sErr, 2)
     end
-    display(tObj(), fCallback)
+    return display(tObj(), fCallback)
   else
     error(string.format("No file '%s'.", sFilename), 2)
   end
