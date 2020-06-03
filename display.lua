@@ -265,7 +265,9 @@ local function checkPage(page)
   local errString = "Page " .. page.name .. ": %s is of wrong type."
 
   cerr(page.platform, "string", string.format(errString, "platform"))
-  if pocket and page.platform ~= "pocket"
+  if page.platform == "all" then
+    -- do nothing
+  elseif pocket and page.platform ~= "pocket"
     or turtle and page.platform ~= "turtle"
     or not pocket and not turtle and
       (page.platform == "pocket" or page.platform == "turtle") then
@@ -282,7 +284,7 @@ local function checkPage(page)
   local lines = write(page.bigInfo)
   if lines > 2 then
     error("Page " .. page.name .. ": bigInfo is too long and prints too many "
-          .. "lines. (Unknown max length)", 2)
+          .. "lines.", 2)
   end
 
   cerr(page.colors, "table", string.format(errString, "colors"))
