@@ -691,6 +691,7 @@ end
 local function edit(obj, i, p)
   local mx, my = term.getSize()
   local tp, set = iter(obj, i)
+  local final
   if tp ~= 2 then
     error("Dawg something happened!", 2)
   end
@@ -701,18 +702,22 @@ local function edit(obj, i, p)
   -- handle the editing
   -- get an x input, with the input starting with the currently set setting
   if set.tp == "string" then
-    settings.set(set.setting, dread(settings.get(set.setting)))
+    local sTmp = dread(settings.get(set.setting))
+    settings.set(set.setting, sTmp)
     settings.save(obj.settings.location)
+    final = sTmp
   elseif set.tp == "number" then
-    local inp = readNumber(obj, set, p)
+    local iTmp = readNumber(obj, set, p)
 
-    settings.set(set.setting, inp)
+    settings.set(set.setting, iTmp)
     settings.save(obj.settings.location)
+    final = iTmp
   elseif set.tp == "color" then
-    local col = readColor(obj, set, p)
+    local cTmp = readColor(obj, set, p)
 
-    settings.set(set.setting, col)
+    settings.set(set.setting, cTmp)
     settings.save(obj.settings.location)
+    final = cTmp
   elseif set.tp == "boolean" then
     local sete = settings.get(set.setting)
     if sete == nil then
@@ -722,6 +727,7 @@ local function edit(obj, i, p)
     end
     settings.set(set.setting, sete)
     settings.save(obj.settings.location)
+    final = sete
   elseif set.tp == "password" then
     if askPass(obj, set, p) then
       local pass, salt = getPass(obj, set, p)
@@ -731,6 +737,7 @@ local function edit(obj, i, p)
       end
       settings.save(obj.settings.location)
     end
+    final = ""
   else
     -- if the type is uneditable, say it's uneditable.
     local col = term.getTextColor()
@@ -739,6 +746,7 @@ local function edit(obj, i, p)
     term.setTextColor(col)
     os.sleep(2)
   end
+  return obj.settings.location, set.setting, final, obj
 end
 
 --[[
@@ -747,7 +755,7 @@ end
   @param fCallback the callback called when a setting is changed
 ]]
 local function display(obj, fCallback)
-
+  fCallback = fCallback or function() end
   local sel = 1
   local pointer = 1
   local pStart = 1
@@ -913,7 +921,7 @@ local function display(obj, fCallback)
       if seltp == 1 then -- item type is a selectable item
         return sel -- return the selected item number
       elseif seltp == 2 then -- item type is a setting
-        edit(obj, sel, pointer) -- edit the setting
+        fCallback(edit(obj, sel, pointer)) -- edit the setting
       elseif seltp == 3 then -- item type is a subPage
         -- get the page
         local i, cur = iter(obj, sel)
@@ -932,7 +940,7 @@ local function display(obj, fCallback)
         end
 
         -- run the sub page
-        display(cur, I_ABSOLUTELY_KNOW_WHAT_I_AM_DOING)
+        display(cur, fCallback)
       end
     end
   end
