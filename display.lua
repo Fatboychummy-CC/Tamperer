@@ -712,12 +712,15 @@ end
   @param obj the object to display
   @param fCallback the callback called when a setting is changed
 ]]
-local function display(obj, fCallback)
+local function display(obj, fCallback, timeout)
   fCallback = fCallback or function() end
   local sel = 1
   local pointer = 1
   local pStart = 1
   local over = {}
+  local keyHit = false
+  local timeoutTimer
+  local returnVal
 
   -- check that the page is OK
   checkPage(obj)
@@ -728,179 +731,225 @@ local function display(obj, fCallback)
 
   settings.load(obj.settings.location)
 
-  while true do
-    -- clear
-    term.setBackgroundColor(colors[obj.colors.bg.main])
-    term.setTextColor(colors[obj.colors.fg.title])
-    term.clear()
+  if timeout then
+    timeoutTimer = os.startTimer(timeout)
+  end
 
-    -- display the page title
-    term.setCursorPos(1, 1)
-    io.write(obj.name)
+  local function mainLoop()
+    while true do
+      -- clear
+      term.setBackgroundColor(colors[obj.colors.bg.main])
+      term.setTextColor(colors[obj.colors.fg.title])
+      term.clear()
 
-    -- display the page info
-    term.setCursorPos(1, 2)
-    term.setTextColor(colors[obj.colors.fg.info])
-    io.write(obj.info)
+      -- display the page title
+      term.setCursorPos(1, 1)
+      io.write(obj.name)
 
-    -- display the four items.
-    for i = 0, positions.items - 1 do
-      local ctype, cur = iter(obj, pStart + i)
-      term.setCursorPos(2, 5 + i)
+      -- display the page info
+      term.setCursorPos(1, 2)
+      term.setTextColor(colors[obj.colors.fg.info])
+      io.write(obj.info)
 
-      -- discriminate by type
-      if ctype == 1 then
-        -- selection
-        term.setTextColor(colors[obj.colors.fg.listTitle])
-        io.write(cur.title)
+      -- display the four items.
+      for i = 0, positions.items - 1 do
+        local ctype, cur = iter(obj, pStart + i)
+        term.setCursorPos(2, 5 + i)
 
-        term.setCursorPos(positions.nameLen + 3, 5 + i)
-        term.setTextColor(colors[obj.colors.fg.listInfo])
-        io.write(cur.info)
-      elseif ctype == 2 then
-        -- setting changer
-        local set = settings.get(cur.setting)
-        if type(set) == "string" and string.len(set) > positions.infoLen then
-          set = set:sub(1, positions.infoLen - 3)
-          set = set .. "..."
-        end
+        -- discriminate by type
+        if ctype == 1 then
+          -- selection
+          term.setTextColor(colors[obj.colors.fg.listTitle])
+          io.write(cur.title)
 
-        term.setTextColor(colors[obj.colors.fg.listTitle])
-        io.write(cur.title)
-
-        term.setCursorPos(positions.nameLen + 3, 5 + i)
-        term.setTextColor(colors[obj.colors.fg.listInfo])
-        if cur.tp == "string" or cur.tp == "number" then
-          io.write(set or "Error: empty")
-        elseif cur.tp == "boolean" then
-          if set == true then
-            io.write("  false [ true ]")
-          elseif set == false then
-            io.write("[ false ] true")
-          else
-            -- nil or broke
-            io.write("? false ? true ?")
+          term.setCursorPos(positions.nameLen + 3, 5 + i)
+          term.setTextColor(colors[obj.colors.fg.listInfo])
+          io.write(cur.info)
+        elseif ctype == 2 then
+          -- setting changer
+          local set = settings.get(cur.setting)
+          if type(set) == "string" and string.len(set) > positions.infoLen then
+            set = set:sub(1, positions.infoLen - 3)
+            set = set .. "..."
           end
-        elseif cur.tp == "color" then
-          io.write(set and string.format("%s (%d)", ccolors[set], set)
-                   or "? (nil)")
-        elseif cur.tp == "password" then
-          local cv = {plain = "Plaintext", sha256 = "sha256", sha256salt = "sha256 + salt", kristwallet = "Kristwallet"}
-          if pocket then
-            io.write(set and cv[cur.store] or "Not yet set")
+
+          term.setTextColor(colors[obj.colors.fg.listTitle])
+          io.write(cur.title)
+
+          term.setCursorPos(positions.nameLen + 3, 5 + i)
+          term.setTextColor(colors[obj.colors.fg.listInfo])
+          if cur.tp == "string" or cur.tp == "number" then
+            io.write(set or "Error: empty")
+          elseif cur.tp == "boolean" then
+            if set == true then
+              io.write("  false [ true ]")
+            elseif set == false then
+              io.write("[ false ] true")
+            else
+              -- nil or broke
+              io.write("? false ? true ?")
+            end
+          elseif cur.tp == "color" then
+            io.write(set and string.format("%s (%d)", ccolors[set], set)
+                     or "? (nil)")
+          elseif cur.tp == "password" then
+            local cv = {plain = "Plaintext", sha256 = "sha256", sha256salt = "sha256 + salt", kristwallet = "Kristwallet"}
+            if pocket then
+              io.write(set and cv[cur.store] or "Not yet set")
+            else
+              io.write(set and "Stored as " .. cv[cur.store] or "Not yet set")
+            end
           else
-            io.write(set and "Stored as " .. cv[cur.store] or "Not yet set")
+            io.write(pocket and "Unsupported" or "Unsupported type.")
           end
-        else
-          io.write(pocket and "Unsupported" or "Unsupported type.")
-        end
-      elseif ctype == 3 then
-        -- subpage selection
-        term.setTextColor(colors[obj.colors.fg.listTitle])
-        io.write(cur.name)
+        elseif ctype == 3 then
+          -- subpage selection
+          term.setTextColor(colors[obj.colors.fg.listTitle])
+          io.write(cur.name)
 
-        term.setTextColor(colors[obj.colors.fg.listInfo])
-        term.setCursorPos(positions.nameLen + 3, 5 + i)
-        io.write(cur.info)
-      elseif ctype ~= 0 then
-        io.write("Broken.")
+          term.setTextColor(colors[obj.colors.fg.listInfo])
+          term.setCursorPos(positions.nameLen + 3, 5 + i)
+          io.write(cur.info)
+        elseif ctype ~= 0 then
+          io.write("Broken.")
+        end
+      end
+
+      -- get the selected item
+      local seltp, selected = iter(obj, sel)
+
+      -- print the info of the selected item
+      term.setTextColor(colors[obj.colors.fg.bigInfo])
+      term.setCursorPos(1, positions.Y - 2)
+      io.write(selected.bigInfo)
+
+      -- print the pointer
+      term.setCursorPos(1, positions.startY + pointer)
+      term.setTextColor(colors[obj.colors.fg.selector])
+      io.write(">")
+
+      -- draw down arrow
+      term.setCursorPos(1, positions.startY + positions.items + 1)
+      if pStart + positions.items > size(obj) + 1 then
+        term.setTextColor(colors[obj.colors.fg.arrowDisabled])
+      else
+        term.setTextColor(colors[obj.colors.fg.arrowEnabled])
+      end
+      io.write(string.char(31))
+
+      -- draw up arrow
+      term.setCursorPos(1, positions.startY)
+      if pStart > 1 then
+        term.setTextColor(colors[obj.colors.fg.arrowEnabled])
+      else
+        term.setTextColor(colors[obj.colors.fg.arrowDisabled])
+      end
+      io.write(string.char(30))
+
+      -- the pointer and page display shit
+      local event = table.pack(os.pullEvent())
+      if event[1] == "key" then
+        keyHit = true
+        local ev, key = table.unpack(event, 1, 2)
+        if key == keys.up then -- if you press upArrow...
+          sel = sel - 1 -- move the selected item up one
+          if pointer == 1 then -- if the pointer is at 1, scroll up.
+            pStart = pStart - 1
+          end
+          if pStart < 1 then -- if we've scrolled up too far, set the scroll back to where it was.
+            pStart = 1
+          end
+          pointer = pointer - 1 -- move the pointer up a slot
+          if pointer < 1 then -- if the pointer is too high, set the pointer back to the top.
+            pointer = 1
+          end
+          if sel < 1 then -- if we've reached the tippy top of the ladder
+            sel = size(obj) + 1 -- select the very bottom item
+            pointer = (size(obj) + 1) < positions.items
+                      and (size(obj) + 1) or positions.items -- move the pointer to the bottom
+            pStart = sel - positions.items + 1 -- scroll down to the bottom
+            if pStart < 1 then
+              pStart = 1 -- then make sure we didn't scroll up after we tried to scroll down.
+            end
+          end
+        elseif key == keys.down then -- if you press downArrow...
+          sel = sel + 1 -- move the selected item down one
+          if pointer == positions.items then -- if the pointer is at the bottom
+            pStart = pStart + 1 -- scroll down
+          end
+          pointer = pointer + 1 -- move the pointer down
+          if pointer > positions.items then -- if the pointer is now too far down...
+            pointer = positions.items -- move it back up to the bottom
+          end
+          if sel > size(obj) + 1 then -- if we've scrolled past the bottom
+            sel = 1 -- select the very top item
+            pStart = 1 -- scroll up
+            pointer = 1 -- set the pointer to be the very first item.
+          end
+        elseif key == keys.enter then -- if we press enter...
+          if seltp == 1 then -- item type is a selectable item
+            returnVal = sel -- return the selected item number
+            return
+          elseif seltp == 2 then -- item type is a setting
+            fCallback(edit(obj, sel, pointer)) -- edit the setting
+          elseif seltp == 3 then -- item type is a subPage
+            -- get the page
+            local i, cur = iter(obj, sel)
+            -- clone-down certain items that don't need to be in every subpage
+            if not cur.colors then
+              cur.colors = obj.colors
+            end
+            if not cur.platform then
+              cur.platform = obj.platform
+            end
+            if not cur.settings then
+              cur.settings = {location = obj.settings.location}
+            end
+            if not cur.settings.location then
+              cur.settings.location = obj.settings.location
+            end
+
+            -- run the sub page
+            display(cur, fCallback)
+          end
+        end
+      elseif event[1] == "timer" and event[2] == timeoutTimer and not keyHit then
+        returnVal = 1
+        return
       end
     end
+  end
 
-    -- get the selected item
-    local seltp, selected = iter(obj, sel)
-
-    -- print the info of the selected item
-    term.setTextColor(colors[obj.colors.fg.bigInfo])
-    term.setCursorPos(1, positions.Y - 2)
-    io.write(selected.bigInfo)
-
-    -- print the pointer
-    term.setCursorPos(1, positions.startY + pointer)
-    term.setTextColor(colors[obj.colors.fg.selector])
-    io.write(">")
-
-    -- draw down arrow
-    term.setCursorPos(1, positions.startY + positions.items + 1)
-    if pStart + positions.items > size(obj) + 1 then
-      term.setTextColor(colors[obj.colors.fg.arrowDisabled])
-    else
-      term.setTextColor(colors[obj.colors.fg.arrowEnabled])
+  local function timeoutPrinter()
+    if timeoutTimer then
+      local last
+      for i = timeout, 1, -1 do
+        last = i
+        local strTimeout = tostring(i)
+        term.setTextColor(colors.white)
+        term.setBackgroundColor(colors.black)
+        term.setCursorPos(positions.X - #tostring(i + 1), 3)
+        io.write(string.rep(' ', #tostring(i + 1)))
+        term.setCursorPos(positions.X - #strTimeout, 3)
+        io.write(strTimeout)
+        if keyHit then
+          break
+        end
+        os.sleep(1)
+      end
+      term.setCursorPos(positions.X - #tostring(last + 1), 3)
+      term.setBackgroundColor(colors.black)
+      io.write(string.rep(' ', #tostring(last + 1)))
     end
-    io.write(string.char(31))
-
-    -- draw up arrow
-    term.setCursorPos(1, positions.startY)
-    if pStart > 1 then
-      term.setTextColor(colors[obj.colors.fg.arrowEnabled])
-    else
-      term.setTextColor(colors[obj.colors.fg.arrowDisabled])
+    while true do
+      os.pullEvent("Nonexistant")
     end
-    io.write(string.char(30))
+  end
 
-    -- the pointer and page display shit
-    local ev, key = os.pullEvent("key")
-    if key == keys.up then -- if you press upArrow...
-      sel = sel - 1 -- move the selected item up one
-      if pointer == 1 then -- if the pointer is at 1, scroll up.
-        pStart = pStart - 1
-      end
-      if pStart < 1 then -- if we've scrolled up too far, set the scroll back to where it was.
-        pStart = 1
-      end
-      pointer = pointer - 1 -- move the pointer up a slot
-      if pointer < 1 then -- if the pointer is too high, set the pointer back to the top.
-        pointer = 1
-      end
-      if sel < 1 then -- if we've reached the tippy top of the ladder
-        sel = size(obj) + 1 -- select the very bottom item
-        pointer = (size(obj) + 1) < positions.items
-                  and (size(obj) + 1) or positions.items -- move the pointer to the bottom
-        pStart = sel - positions.items + 1 -- scroll down to the bottom
-        if pStart < 1 then
-          pStart = 1 -- then make sure we didn't scroll up after we tried to scroll down.
-        end
-      end
-    elseif key == keys.down then -- if you press downArrow...
-      sel = sel + 1 -- move the selected item down one
-      if pointer == positions.items then -- if the pointer is at the bottom
-        pStart = pStart + 1 -- scroll down
-      end
-      pointer = pointer + 1 -- move the pointer down
-      if pointer > positions.items then -- if the pointer is now too far down...
-        pointer = positions.items -- move it back up to the bottom
-      end
-      if sel > size(obj) + 1 then -- if we've scrolled past the bottom
-        sel = 1 -- select the very top item
-        pStart = 1 -- scroll up
-        pointer = 1 -- set the pointer to be the very first item.
-      end
-    elseif key == keys.enter then -- if we press enter...
-      if seltp == 1 then -- item type is a selectable item
-        return sel -- return the selected item number
-      elseif seltp == 2 then -- item type is a setting
-        fCallback(edit(obj, sel, pointer)) -- edit the setting
-      elseif seltp == 3 then -- item type is a subPage
-        -- get the page
-        local i, cur = iter(obj, sel)
-        -- clone-down certain items that don't need to be in every subpage
-        if not cur.colors then
-          cur.colors = obj.colors
-        end
-        if not cur.platform then
-          cur.platform = obj.platform
-        end
-        if not cur.settings then
-          cur.settings = {location = obj.settings.location}
-        end
-        if not cur.settings.location then
-          cur.settings.location = obj.settings.location
-        end
+  parallel.waitForAny(mainLoop, timeoutPrinter)
 
-        -- run the sub page
-        display(cur, fCallback)
-      end
-    end
+  if returnVal then
+    return returnVal
   end
   printError("This shouldn't happen.")
   printError("Please report to le github with your layout file.")
@@ -913,6 +962,7 @@ end
 
   @param sFilename the name of the file to load
   @param fCallback a callback function that is called when a setting is changed.
+  @param timeout time in seconds until item 1 is automatically selected and returned.
 
   fCallback:
     fCallback(sSettingsFileName, sSettingChanged, <?>NewValue, tCurrentPage)
@@ -925,7 +975,7 @@ end
       @param tCurrentPage
         the page the setting was changed in.
 ]]
-local function displayFile(sFilename, fCallback)
+local function displayFile(sFilename, fCallback, timeout)
   local h = io.open(sFilename, 'r')
   if h then
     local sData = h:read("*a")
@@ -935,7 +985,7 @@ local function displayFile(sFilename, fCallback)
     if not tObj then
       error(sErr, 2)
     end
-    return display(tObj(), fCallback)
+    return display(tObj(), fCallback, timeout)
   else
     error(string.format("No file '%s'.", sFilename), 2)
   end
