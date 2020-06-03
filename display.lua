@@ -741,11 +741,12 @@ local function edit(obj, i, p)
   end
 end
 
--- display the page
--- obj: the page to be displayed
--- I_ABSOLUTELY_KNOW_WHAT_I_AM_DOING: Set to true, will skip error checking.
---    Warning: Only do this if you absolutely know what you are doing.
-local function display(obj, I_ABSOLUTELY_KNOW_WHAT_I_AM_DOING)
+--[[
+  display the page
+  @param obj the object to display
+  @param fCallback the callback called when a setting is changed
+]]
+local function display(obj, fCallback)
 
   local sel = 1
   local pointer = 1
@@ -753,9 +754,7 @@ local function display(obj, I_ABSOLUTELY_KNOW_WHAT_I_AM_DOING)
   local over = {}
 
   -- check that the page is OK
-  if not I_ABSOLUTELY_KNOW_WHAT_I_AM_DOING then
-    checkPage(obj)
-  end
+  checkPage(obj)
 
   if not obj.settings.location then
     obj.settings.location = ".settings"
@@ -970,7 +969,7 @@ local function displayFile(sFilename, fCallback)
     if not tObj then
       error(sErr, 2)
     end
-    display(tObj())
+    display(tObj(), fCallback)
   else
     error(string.format("No file '%s'.", sFilename), 2)
   end
