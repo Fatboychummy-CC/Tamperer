@@ -942,19 +942,37 @@ local function display(obj, I_ABSOLUTELY_KNOW_WHAT_I_AM_DOING)
   os.sleep(30)
 end
 
-local function displayFile(filename)
-  local h = io.open(filename, 'r')
+--[[
+  displays a file as a tamperer page.
+  Uses Load to load the file, so you can use lua code to inject values during creation.
+
+  @param sFilename the name of the file to load
+  @param fCallback a callback function that is called when a setting is changed.
+
+  fCallback:
+    fCallback(sSettingsFileName, sSettingChanged, <?>NewValue, tCurrentPage)
+      @param sSettingsFileName
+        the filename of the setting that is changed
+      @param sSettingChanged
+        the setting that was changed
+      @param <?>NewValue
+        the new value of the setting
+      @param tCurrentPage
+        the page the setting was changed in.
+]]
+local function displayFile(sFilename, fCallback)
+  local h = io.open(sFilename, 'r')
   if h then
-    local data = h:read("*a")
+    local sData = h:read("*a")
     h:close()
 
-    local obj, err = load("return " .. tostring(data), filename)
-    if not obj then
-      error(err, 2)
+    local tObj, sErr = load("return " .. tostring(sData), sFilename)
+    if not tObj then
+      error(sErr, 2)
     end
-    display(obj())
+    display(tObj())
   else
-    error(string.format("No file '%s'.", filename), 2)
+    error(string.format("No file '%s'.", sFilename), 2)
   end
 end
 
