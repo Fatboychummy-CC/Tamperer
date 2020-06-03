@@ -11,7 +11,6 @@
   TODO: more code comments
   TODO: Better name for the "positions" table
 
-  TODO: Fix check seeing colors as a string.
 ]]
 
 --[[
@@ -77,59 +76,6 @@ end
   -- ["!"] = true  > table not required.
   -- ["!"] = false > table required, but only check on first-level.
 ]]
-local format = {
-  name     = "string",
-  info     = "string",
-  bigInfo  = "string",
-  platform = "string.choices(all,turtle,pocket,computer)",
-
-  colors = {
-    ["!"] = false,
-    bg = {
-      main = "color"
-    },
-    fg = {
-      main          = "color",
-      title         = "color",
-      info          = "color",
-      listInfo      = "color",
-      listTitle     = "color",
-      bigInfo       = "color",
-      selector      = "color",
-      arrowDisabled = "color",
-      arrowEnabled  = "color",
-      input         = "color",
-      error         = "color",
-    }
-  },
-  selections = {
-    ["!"] = true,
-    ["?"] = {
-      title   = "string",
-      info    = "string",
-      bigInfo = "string"
-    }
-  },
-  settings = {
-    ["!"] = true,
-    location = "string",
-    ["?"] = {
-      setting = "string",
-      title   = "string",
-      tp      = "string.choices(string,number,color,password,boolean)",
-      bigInfo = "string",
-      min     = "nil/number.depends(tp=string(number))",
-      max     = "nil/number.depends(tp=string(number))",
-      store   = "nil/string.depends(tp=string(password)).choices(plain,sha256,sha256salt,kristwallet)"
-    }
-  },
-  final = "nil/string"
-}
-
-format.subPages = {
-  ["!"] = true,
-  ["?"] = format
-}
 
 -- grab a file from link, and put into file named name
 local function getRequiredFile(link, name)
@@ -288,152 +234,162 @@ local function dread(def, readChar)
   end
 end
 
+-- create error if variable a is not of type b
+local function cerr(a, b, err, lvl)
+  if type(a) ~= b then
+    error(err .. " (expected " .. b .. ", got " .. type(a) .. ")",
+          lvl and lvl + 1 or 3)
+  end
+end
+
+-- create error if length of string 'a' is greater than a max 'b'
+local function clen(a, b, name, lvl)
+  if type(a) ~= "string" then error("Check failure: not string", 2) end
+  if string.len(a) > b then
+    error("Page layout string " .. name .. " is too long (max: " .. tostring(b)
+          .. ", at: " .. tostring(string.len(a)) .. ")", lvl and lvl + 1 or 3)
+  end
+end
+
 -- check the page for errors
 local function checkPage(page)
-  -- nil/number/string.depends(x=string(bla)).choices(x,y,z)
-  local split = "[^/]+"
-  local depends = "%.depends%((.+)=(.+)%((.+)%)%)"
-  local choices = "%.choices%((.-)%)"
-  local choicesSplit = "[^,]+"
-  local function formatTypes(name, key, types, got)
-    return string.format("Section '%s': '%s': Expected '%s', got '%s'.", name, key, type(types) == "string" and types or table.concat(types, "/"), got)
+  -- the readability of this function at first glance is horrifying
+  -- however, it should be really simple, once you look at it for more than
+  -- 0.1 nanoseconds.  I won't comment on it.
+
+  cerr(page, "table", "Page layout is not a table.")
+
+
+  cerr(page.name, "string", "Page: name is of wrong type.")
+
+  local errString = "Page " .. page.name .. ": %s is of wrong type."
+
+  cerr(page.platform, "string", string.format(errString, "platform"))
+  if pocket and page.platform ~= "pocket"
+    or turtle and page.platform ~= "turtle"
+    or not pocket and not turtle and
+      (page.platform == "pocket" or page.platform == "turtle") then
+    error("Menu is designed for a different platform (" .. page.platform .. ").", 2)
   end
 
-  local function check(tbl, name, format2)
-    if type(tbl) ~= "table" then error("AAAA") end
-    if name == nil then
-      error(formatTypes("unknown", "name", "string", "nil"), 0)
+  clen(page.name, positions.nameLen, "page.name")
+
+  cerr(page.info, "string", string.format(errString, "info"))
+  clen(page.info, positions.infoLen, "page.info")
+
+  cerr(page.bigInfo, "string", string.format(errString, "bigInfo"))
+  term.setCursorPos(1, 1)
+  local lines = write(page.bigInfo)
+  if lines > 2 then
+    error("Page " .. page.name .. ": bigInfo is too long and prints too many "
+          .. "lines. (Unknown max length)", 2)
+  end
+
+  cerr(page.colors, "table", string.format(errString, "colors"))
+  cerr(page.colors.bg, "table", string.format(errString, "colors.bg"))
+  local exp = {"main"}
+  for i = 1, #exp do
+    cerr(page.colors.bg[exp[i]], "string", string.format(errString, "colors.bg." .. exp[i]))
+  end
+  cerr(page.colors.fg, "table", string.format(errString, "colors.fg"))
+  exp = {"error", "main", "title", "info", "listInfo", "listTitle", "bigInfo", "selector", "arrowDisabled", "arrowEnabled", "input"}
+  for i = 1, #exp do
+    cerr(page.colors.fg[exp[i]], "string", string.format(errString, "colors.fg." .. exp[i]))
+  end
+
+  if page.selections then
+    for i = 1, #page.selections do
+      local cur = page.selections[i]
+      local errorString = "Page " .. page.name .. ", selection " .. tostring(i) .. ": %s is of wrong type."
+      local lenString = "page.settings[" .. tostring(i) .. "].%s"
+
+      cerr(cur.title, "string", string.format(errorString, "title"))
+      clen(cur.title, positions.nameLen, string.format(lenString, "title"))
+
+      cerr(cur.info, "string", string.format(errorString, "info"))
+      clen(cur.info, positions.infoLen, string.format(lenString, "info"))
+
+      cerr(cur.bigInfo, "string", string.format(errorString, "bigInfo"))
+      term.setCursorPos(1, 1)
+      local lines = write(cur.bigInfo)
+      if lines > 2 then
+        error("Page " .. page.name .. ", selection " .. tostring(i)
+              .. ": bigInfo is too long and prints too many "
+              .. "lines (Unknown max length).", 2)
+      end
     end
-    -- for each item in the format page
-    for k, v in pairs(format2 or format) do
-      if k == "?" then
-        -- handle iterative items (1,2,3,4,5,6) where all are similar
-        for i = 1, #tbl do
-          check(tbl[i], string.format("%s[%d]", name, i), v)
-        end
-      elseif k == "!" then
-        -- extra statement to block the else from receiving !
-      elseif type(v) == "table" then
-        if type(tbl[k]) ~= "table" and type(v["!"]) ~= "boolean" then
-          -- if not a table AND required, error.
-          error(formatTypes(name, k, "table", type(tbl[k])))
-        elseif type(v["!"]) == "boolean" and not v["!"] and format2 then
-          -- catch to stop from checking if at depth
-        elseif type(tbl[k]) == "table" then
-          -- recurse
-          check(tbl[k], name .. "." .. tostring(k), v)
-        else
-          tbl[k] = {}
-        end
-      else
-        -- handle any other type.
-        -- get types allowed by splitting the string
-        local types = {}
-        for match in v:gmatch(split) do
-          types[#types + 1] = match
-        end
+  else
+    page.selections = {}
+  end
 
-        -- check for presence of matching type and proper dependencies (if any)
-        local ok = false
-        for i = 1, #types do
-          local current = types[i]
-          -- check if dependencies
-          local dKey, dType, dVal = current:match(depends)
-          -- check if choices
-          local cs = current:match(choices)
+  if page.settings then
+    for i = 1, #page.settings do
+      local cur = page.settings[i]
+      local errorString = "Page " .. page.name .. ", setting " .. tostring(i) .. ": %s is of wrong type."
+      local lenString = "page.settings[" .. tostring(i) .. "].%s"
 
-          -- check if the type matches
-          local tOK = false
-          local firstDot = current:find("%.")
-          local tp = current
-          if firstDot then
-            tp = current:sub(1, firstDot - 1)
-          end
-          if tp == "color" then
-            -- handle the special case of colors
-            if type(tbl[k]) == "string" and ccolors[tbl[k]] then
-              tOK = true
-            end
-          else
-            -- handle all other cases
-            if type(tbl[k]) == tp then
-              tOK = true
-            end
-          end
+      cerr(cur.title, "string", string.format(errorString, "title"))
+      clen(cur.title, positions.nameLen, "title")
 
-          -- check for dependencies and if they match.
-          local dOK = false
-          if dKey then
-            -- if dkey, then a dependency exists.  tbl[dkey] should be of type dtype, with value dval.
-            if dType == "number" then
-              dVal = tonumber(dVal)
-            elseif dType == "password" then
-              error(string.format("Section '%s': '%s': Cannot depend on password!", name, k))
-            end
-            if tbl[dKey] and type(tbl[dKey]) == dType and tbl[dKey] == dVal then
-              dOK = true
-            end
-          else
-            dOK = true
-          end
+      cerr(cur.bigInfo, "string", string.format(errorString, "bigInfo"))
+      term.setCursorPos(1, 1)
+      local lines = write(cur.bigInfo)
+      if lines > 2 then
+        error("Page " .. page.name .. ", setting " .. tostring(i)
+              .. ": bigInfo is too long and prints too many "
+              .. "lines (Unknown max length).", 2)
+      end
 
-          -- check for choices and if they match
-          local cOK = false
-          if cs then
-            local tCs = {}
-            for match in cs:gmatch(choicesSplit) do
-              tCs[#tCs + 1] = match
-            end
+      cerr(cur.setting, "string", string.format(errorString, "setting"))
 
-            for i = 1, #tCs do
-              if tp == "number" then
-                tCs[i] = tonumber(tCs[i])
-              end
-              if tCs[i] == tbl[k] then
-                cOK = true
-                break
-              end
-            end
-          else
-            cOK = true
-          end
+      cerr(cur.tp, "string", string.format(errorString, "tp"))
+      if cur.min then
+        cerr(cur.min, "number", string.format(errorString, "min"))
+      end
+      if cur.max then
+        cerr(cur.max, "number", string.format(errorString, "max"))
+      end
 
-          -- if all checks are ok, we are good.
-          if dOK and cOK and tOK then
-            ok = true
-            break
-          end
-
-          -- if the type is good, but a dependency is unmet
-          if tOK and not dOK then
-            error(string.format(
-              "Section '%s': '%s': Dependency not met ('%s' must be of type '%s', and with value '%s').",
-              name, k,
-              dKey, dType, dVal
-            ))
-          end
-
-          -- if the type is good, but a choice is wrong
-          if tOK and not cOK then
-            error(string.format(
-              "Section '%s': '%s': Choices allowed: %s (got '%s').",
-              name, k,
-              cs, tbl[k]
-            ))
-          end
-        end
-
-        -- if nothing is ok
-        if not ok then
-          error(string.format("Section '%s': '%s': Expected '%s', got '%s'.",
-            name, k,
-            v, type(tbl[k]))
-          )
+      if cur.tp == "password" then
+        cerr(cur.store, "string", string.format(errorString, "store"))
+        if cur.store ~= "plain"
+          and cur.store ~= "sha256"
+          and cur.store ~= "sha256salt"
+          and cur.store ~= "kristwallet" then
+          error(string.format("Page %s, setting %d: store is not of allowed "
+                              .. "values (plain, sha256, sha256salt, kristwallet)",
+                              page.name, i), 2)
+        elseif cur.store ~= "plain" then
+          -- download requirements.
+          getRequiredFile("https://pastebin.com/raw/6UV4qfNF", "/sha256.lua")
         end
       end
     end
+  else
+    page.settings = {}
   end
-  check(page, page.name)
+
+  if page.subPages then
+    -- ONLY CHECK TOPMOST SUBPAGE, DON'T RECURSIVE CHECK
+    for i = 1, #page.subPages do
+      local cur = page.subPages[i]
+      local errorString = "Subpage %d: %s is of wrong type."
+
+      cerr(cur.name, "string", string.format(errorString, i, "name"))
+      cerr(cur.info, "string", string.format(errorString, i, "info"))
+      cerr(cur.bigInfo, "string", string.format(errorString, i, "bigInfo"))
+      term.setCursorPos(1, 1)
+      local lines = write(cur.bigInfo)
+      if lines > 2 then
+        error("Page " .. page.name .. ", subpage " .. tostring(i)
+              .. ": bigInfo is too long and prints too many "
+              .. "lines (Unknown max length).", 2)
+      end
+    end
+  else
+    page.subPages = {}
+  end
+
   term.clear()
 end
 
