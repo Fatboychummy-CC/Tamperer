@@ -1,5 +1,5 @@
 -- requires
-local tamperer = require("display")
+local tamperer = require("minified")
 
 -- user data
 local layoutsFolder = "/test/layouts/"
@@ -42,7 +42,7 @@ local function callback(filename, setting, newValue, obj)
 end
 
 -- run the page
-local ok, err = pcall(tamperer.displayFile, layoutsFolder .. layouts[inp], callback)
+local ok, err = pcall(tamperer.displayFile, layoutsFolder .. layouts[inp], callback, 5)
 if not ok then
   io.write("!")
   os.sleep(5)
