@@ -10,8 +10,8 @@
   TODO: cleanup
   TODO: more code comments
   TODO: Better name for the "positions" table
-
 ]]
+local expect = require("cc.expect").expect
 
 --[[
  positions: stores vital locations that are to be used in place of hardcoded
@@ -713,6 +713,10 @@ end
   @param fCallback the callback called when a setting is changed
 ]]
 local function display(obj, fCallback, timeout)
+  expect(1, obj, "table")
+  expect(2, fCallback, "function", "nil")
+  expect(3, timeout, "number", "nil")
+
   fCallback = fCallback or function() end
   local sel = 1
   local pointer = 1
@@ -976,6 +980,9 @@ end
         the page the setting was changed in.
 ]]
 local function displayFile(sFilename, fCallback, timeout)
+  expect(1, sFilename, "string")
+  expect(2, fCallback, "function", "nil")
+  expect(3, timeout, "number", "nil")
   local h = io.open(sFilename, 'r')
   if h then
     local sData = h:read("*a")
