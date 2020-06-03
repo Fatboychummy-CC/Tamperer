@@ -349,8 +349,16 @@ local function checkPage(page)
           if firstDot then
             tp = current:sub(1, firstDot - 1)
           end
-          if type(tbl[k]) == tp then
-            tOK = true
+          if tp == "color" then
+            -- handle the special case of colors
+            if type(tbl[k]) == "string" and ccolors[tbl[k]] then
+              tOK = true
+            end
+          else
+            -- handle all other cases
+            if type(tbl[k]) == tp then
+              tOK = true
+            end
           end
 
           -- check for dependencies and if they match.
