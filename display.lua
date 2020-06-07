@@ -960,6 +960,26 @@ local function display(obj, fCallback, timeout)
   os.sleep(30)
 end
 
+local function loadFile(sFileName, iLevelIncrement)
+  expect(1, sFileName, "string")
+  expect(2, iLevelIncrement, "number", "nil")
+  iLevelIncrement = iLevelIncrement or 0
+
+  local h = io.open(sFileName, 'r')
+  if h then
+    local sData = h:read("*a")
+    h:close()
+
+    local tObj, sErr = load("return " .. tostring(sData), sFilename)
+    if not tObj then
+      error(sErr, 2 + iLevelIncrement)
+    end
+    return tObj
+  else
+    error(string.format("No file '%s'.", sFileName), 2)
+  end
+end
+
 --[[
   displays a file as a tamperer page.
   Uses Load to load the file, so you can use lua code to inject values during creation.
@@ -979,26 +999,16 @@ end
       @param tCurrentPage
         the page the setting was changed in.
 ]]
-local function displayFile(sFilename, fCallback, timeout)
-  expect(1, sFilename, "string")
+local function displayFile(sFileName, fCallback, iTimeout)
+  expect(1, sFileName, "string")
   expect(2, fCallback, "function", "nil")
-  expect(3, timeout, "number", "nil")
-  local h = io.open(sFilename, 'r')
-  if h then
-    local sData = h:read("*a")
-    h:close()
+  expect(3, iTimeout, "number", "nil")
 
-    local tObj, sErr = load("return " .. tostring(sData), sFilename)
-    if not tObj then
-      error(sErr, 2)
-    end
-    return display(tObj(), fCallback, timeout)
-  else
-    error(string.format("No file '%s'.", sFilename), 2)
-  end
+  return display(loadFile(sFileName, 1)(), fCallback, iTimeout)
 end
 
 return {
   display = display,
-  displayFile = displayFile
+  displayFile = displayFile,
+  loadFile = loadFile
 }
