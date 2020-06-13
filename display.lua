@@ -850,46 +850,54 @@ local function display(obj, fCallback, timeout)
       end
       io.write(string.char(30))
 
+      local function upSel()
+        sel = sel - 1 -- move the selected item up one
+        if pointer == 1 then -- if the pointer is at 1, scroll up.
+          pStart = pStart - 1
+        end
+        if pStart < 1 then -- if we've scrolled up too far, set the scroll back to where it was.
+          pStart = 1
+        end
+        pointer = pointer - 1 -- move the pointer up a slot
+        if pointer < 1 then -- if the pointer is too high, set the pointer back to the top.
+          pointer = 1
+        end
+        if sel < 1 then -- if we've reached the tippy top of the ladder
+          sel = size(obj) + 1 -- select the very bottom item
+          pointer = (size(obj) + 1) < positions.items
+                    and (size(obj) + 1) or positions.items -- move the pointer to the bottom
+          pStart = sel - positions.items + 1 -- scroll down to the bottom
+          if pStart < 1 then
+            pStart = 1 -- then make sure we didn't scroll up after we tried to scroll down.
+          end
+        end
+      end
+
+      local function downSel()
+        sel = sel + 1 -- move the selected item down one
+        if pointer == positions.items then -- if the pointer is at the bottom
+          pStart = pStart + 1 -- scroll down
+        end
+        pointer = pointer + 1 -- move the pointer down
+        if pointer > positions.items then -- if the pointer is now too far down...
+          pointer = positions.items -- move it back up to the bottom
+        end
+        if sel > size(obj) + 1 then -- if we've scrolled past the bottom
+          sel = 1 -- select the very top item
+          pStart = 1 -- scroll up
+          pointer = 1 -- set the pointer to be the very first item.
+        end
+      end
+
       -- the pointer and page display shit
       local event = table.pack(os.pullEvent())
       if event[1] == "key" then
         keyHit = true
         local ev, key = table.unpack(event, 1, 2)
         if key == keys.up then -- if you press upArrow...
-          sel = sel - 1 -- move the selected item up one
-          if pointer == 1 then -- if the pointer is at 1, scroll up.
-            pStart = pStart - 1
-          end
-          if pStart < 1 then -- if we've scrolled up too far, set the scroll back to where it was.
-            pStart = 1
-          end
-          pointer = pointer - 1 -- move the pointer up a slot
-          if pointer < 1 then -- if the pointer is too high, set the pointer back to the top.
-            pointer = 1
-          end
-          if sel < 1 then -- if we've reached the tippy top of the ladder
-            sel = size(obj) + 1 -- select the very bottom item
-            pointer = (size(obj) + 1) < positions.items
-                      and (size(obj) + 1) or positions.items -- move the pointer to the bottom
-            pStart = sel - positions.items + 1 -- scroll down to the bottom
-            if pStart < 1 then
-              pStart = 1 -- then make sure we didn't scroll up after we tried to scroll down.
-            end
-          end
+          upSel()
         elseif key == keys.down then -- if you press downArrow...
-          sel = sel + 1 -- move the selected item down one
-          if pointer == positions.items then -- if the pointer is at the bottom
-            pStart = pStart + 1 -- scroll down
-          end
-          pointer = pointer + 1 -- move the pointer down
-          if pointer > positions.items then -- if the pointer is now too far down...
-            pointer = positions.items -- move it back up to the bottom
-          end
-          if sel > size(obj) + 1 then -- if we've scrolled past the bottom
-            sel = 1 -- select the very top item
-            pStart = 1 -- scroll up
-            pointer = 1 -- set the pointer to be the very first item.
-          end
+          downSel()
         elseif key == keys.enter then -- if we press enter...
           if seltp == 1 then -- item type is a selectable item
             returnVal = sel -- return the selected item number
@@ -916,6 +924,13 @@ local function display(obj, fCallback, timeout)
             -- run the sub page
             display(cur, fCallback)
           end
+        end
+      elseif event[1] == "mouse_scroll" then
+        keyHit = true
+        if event[2] == -1 then
+          upSel()
+        else
+          downSel()
         end
       elseif event[1] == "timer" and event[2] == timeoutTimer and not keyHit then
         returnVal = 1
