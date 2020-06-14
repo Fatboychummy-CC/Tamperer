@@ -903,7 +903,9 @@ local function display(obj, fCallback, timeout)
             returnVal = sel -- return the selected item number
             return
           elseif seltp == 2 then -- item type is a setting
-            fCallback(edit(obj, sel, pointer)) -- edit the setting
+            local sSettingsFileName, _1, _2, _3 = edit(obj, sel, pointer)
+            fCallback(sSettingsFileName, _1, _2, _3) -- edit the setting
+            settings.save(sSettingsFileName)
           elseif seltp == 3 then -- item type is a subPage
             -- get the page
             local i, cur = iter(obj, sel)
