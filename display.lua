@@ -1029,6 +1029,9 @@ end
   returns: subpage if found, nil if not
 ]]
 local function getSubPage(tTamp, sName)
+  expect(1, tTamp, "table")
+  expect(2, sName, "string")
+  
   if tTamp.subPages then
     -- look for top-level subpages
     for i = 1, #tTamp.subPages do
