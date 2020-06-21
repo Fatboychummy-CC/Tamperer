@@ -1024,8 +1024,30 @@ local function displayFile(sFileName, fCallback, iTimeout)
   return display(loadFile(sFileName, 1)(), fCallback, iTimeout)
 end
 
+--[[
+  get a subpage from object tTamp, with name sName (recursively)
+  returns: subpage if found, nil if not
+]]
+local function getSubPage(tTamp, sName)
+  if tTamp.subPages then
+    -- look for top-level subpages
+    for i = 1, #tTamp.subPages do
+      if tTamp.subPages[i].name == sName then
+        return tTamp.subPages[i]
+      end
+    end
+
+    -- if no top-level subpage was found, descend.
+    for i = 1, #tTamp.subPages do
+      local temp = getSubPage(tTamp.subPages[i], sName)
+      if temp then return temp end
+    end
+  end
+end
+
 return {
   display = display,
   displayFile = displayFile,
-  loadFile = loadFile
+  loadFile = loadFile,
+  getSubPage = getSubPage
 }
