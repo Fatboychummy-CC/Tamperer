@@ -977,6 +977,10 @@ local function display(obj, fCallback, timeout)
   os.sleep(30)
 end
 
+--[[
+  load file sFileName, (increment errors by iLevelIncrement)
+  returns a function of the file loaded
+]]
 local function loadFile(sFileName, iLevelIncrement)
   expect(1, sFileName, "string")
   expect(2, iLevelIncrement, "number", "nil")
@@ -987,11 +991,11 @@ local function loadFile(sFileName, iLevelIncrement)
     local sData = h:read("*a")
     h:close()
 
-    local tObj, sErr = load("return " .. tostring(sData), sFilename)
+    local fObj, sErr = load("return " .. tostring(sData), sFilename)
     if not tObj then
       error(sErr, 2 + iLevelIncrement)
     end
-    return tObj
+    return fObj
   else
     error(string.format("No file '%s'.", sFileName), 2)
   end
@@ -1031,7 +1035,7 @@ end
 local function getSubPage(tTamp, sName)
   expect(1, tTamp, "table")
   expect(2, sName, "string")
-  
+
   if tTamp.subPages then
     -- look for top-level subpages
     for i = 1, #tTamp.subPages do
@@ -1048,9 +1052,14 @@ local function getSubPage(tTamp, sName)
   end
 end
 
+local function getDependencies()
+  getRequiredFile("https://pastebin.com/raw/6UV4qfNF", "/sha256.lua")
+end
+
 return {
   display = display,
   displayFile = displayFile,
   loadFile = loadFile,
-  getSubPage = getSubPage
+  getSubPage = getSubPage,
+  getDependencies = getDependencies
 }
