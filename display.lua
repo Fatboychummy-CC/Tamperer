@@ -992,8 +992,8 @@ local function loadFile(sFileName, iLevelIncrement)
     h:close()
 
     local fObj, sErr = load("return " .. tostring(sData), sFilename)
-    if not tObj then
-      error(sErr, 2 + iLevelIncrement)
+    if not fObj then
+      error(string.format("Failed to load file:\n%s", sErr), 2 + iLevelIncrement)
     end
     return fObj
   else
