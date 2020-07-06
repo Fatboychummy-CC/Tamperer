@@ -578,7 +578,7 @@ local function getPass(obj, set, p)
         -- grab the sha256 lib
         -- Requiring here should be okay to do, I doubt there'll be more than
         -- one password per page so it won't affect speed or anything.
-        local sha256 = require(".sha256")
+        local sha256 = require("sha256")
 
         -- if we want to salt it, generate a salt.
         if set.store == "sha256salt" then
