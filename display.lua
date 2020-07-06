@@ -82,6 +82,7 @@ local function getRequiredFile(link, name)
   term.clear()
   term.setCursorPos(1, 1)
   print("Grabbing a file that is required to display this page...")
+  name = fs.combine(shell.dir(), fs.combine("modules", name))
   print(link, "==>", name)
 
   -- it's already here, exit.
@@ -363,7 +364,7 @@ local function checkPage(page)
                               page.name, i), 2)
         elseif cur.store ~= "plain" then
           -- download requirements.
-          getRequiredFile("https://pastebin.com/raw/6UV4qfNF", "/sha256.lua")
+          getRequiredFile("https://pastebin.com/raw/6UV4qfNF", "sha256.lua")
         end
       end
     end
@@ -1053,7 +1054,7 @@ local function getSubPage(tTamp, sName)
 end
 
 local function getDependencies()
-  getRequiredFile("https://pastebin.com/raw/6UV4qfNF", "/sha256.lua")
+  getRequiredFile("https://pastebin.com/raw/6UV4qfNF", "sha256.lua")
 end
 
 return {
