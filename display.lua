@@ -86,7 +86,7 @@ local function getRequiredFile(link, name)
   print(link, "==>", name)
 
   -- it's already here, exit.
-  if fs.exists(name) then
+  if fs.exists(name) or pcall(require, name) then
     return
   end
 
