@@ -225,6 +225,14 @@ local function dread(def, readChar)
           tmr = os.startTimer(0.4)
         end
       end
+    elseif event == "paste" then
+      local str = ev[2]
+      if ins then
+        def = string.sub(def, 1, pos - 1) .. str .. string.sub(def, pos + #str)
+      else
+        def = string.sub(def, 1, pos - 1) .. str .. string.sub(def, pos)
+      end
+      pos = pos + #str
     elseif event == "timer" then -- if in insert mode, blink the full character.
       local tm = ev[2]
       if tm == tmr then
