@@ -713,7 +713,7 @@ local function edit(obj, i, p)
     term.setTextColor(col)
     os.sleep(2)
   end
-  return obj.settings.location, set, final, obj
+  return obj.settings.location, set.setting, final, obj
 end
 
 --[[
