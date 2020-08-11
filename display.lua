@@ -704,7 +704,7 @@ local function edit(obj, i, p)
       end
       settings.save(obj.settings.location)
     end
-    final = ""
+    final = settings.get(set.setting)
   else
     -- if the type is uneditable, say it's uneditable.
     local col = term.getTextColor()
