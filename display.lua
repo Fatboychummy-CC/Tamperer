@@ -67,6 +67,8 @@ for k, v in pairs(colours) do
   ccolors[v] = k
 end
 
+local mx, my = term.getSize()
+
 --[[
   format table with data we can check easily later.
   -- .choices(x,y,z)         > allow only the following choices for this value
@@ -436,10 +438,21 @@ local function size(obj)
   return #obj.selections + #obj.settings + #obj.subPages
 end
 
+local function drawError(sText, nPosition, nTime, color)
+  term.setCursorPos(positions.nameLen + 3, positions.startY + nPosition)
+  term.write(string.rep(' ', mx - (positions.nameLen + 3)))
+  term.setCursorPos(positions.nameLen + 3, positions.startY + nPosition)
+  local col = term.getTextColor()
+  term.setTextColor(ccolors[color])
+  term.write(sText)
+  term.setTextColor(col)
+
+  os.sleep(nTime)
+end
+
 -- read a number.
 local function readNumber(obj, set, p)
   local str = tostring(settings.get(set.setting))
-  local mx, my = term.getSize()
 
   if str == "nil" then str = "0" end
 
@@ -452,49 +465,26 @@ local function readNumber(obj, set, p)
 
     if not inp then
       -- NaN
-      term.setCursorPos(positions.nameLen + 3, positions.startY + p)
-      io.write(string.rep(' ', mx - 14))
-      term.setCursorPos(positions.nameLen + 3, positions.startY + p)
-      local col = term.getTextColor()
-      term.setTextColor(ccolors[obj.colors.fg.error])
-      io.write("Not a number.")
-      term.setTextColor(col)
-
-      os.sleep(2)
+      drawError("Not a number", p, 2, obj.colors.fg.error)
     else
       local ok = true
       -- check if number is below min
       if set.min and inp < set.min then
         ok = false
-        term.setCursorPos(positions.nameLen + 3, positions.startY + p)
-        io.write(string.rep(' ', mx - 14))
-        term.setCursorPos(positions.nameLen + 3, positions.startY + p)
-        local col = term.getTextColor()
-        term.setTextColor(ccolors[obj.colors.fg.error])
-        io.write(string.format("Minimum: %d", set.min))
-        term.setTextColor(col)
+        drawError(string.format("Minimum: %d", set.min), p, 2, obj.colors.fg.error)
         str = tostring(set.min)
       end
 
       -- check if number is above max
       if set.max and inp > set.max then
         ok = false
-        term.setCursorPos(positions.nameLen + 3, positions.startY + p)
-        io.write(string.rep(' ', mx - 14))
-        term.setCursorPos(positions.nameLen + 3, positions.startY + p)
-        local col = term.getTextColor()
-        term.setTextColor(ccolors[obj.colors.fg.error])
-        io.write(string.format("Maximum: %d", set.max))
-        term.setTextColor(col)
+        drawError(string.format("Maximum: %d", set.max), p, 2, obj.colors.fg.error)
         str = tostring(set.max)
       end
 
       -- if all was good, return the number.  Else, an error was displayed.
-      -- Sleep for 2 seconds to let the user read it.
       if ok then
         return inp
-      else
-        os.sleep(2)
       end
     end
   end
@@ -503,7 +493,6 @@ end
 -- Read a color.  Accepts be "gray" or "grey", or "128".
 local function readColor(obj, set, p)
   local str = tostring(ccolors[settings.get(set.setting)])
-  local mx, my = term.getSize()
 
   if str == "nil" then str = "?" end
 
@@ -513,43 +502,18 @@ local function readColor(obj, set, p)
     term.setCursorPos(positions.nameLen + 3, positions.startY + p)
     local inp = dread(str)
     local ninp = tonumber(inp)
-
-    if ninp then
-      -- number input
-      if ccolors[ninp] then
-        return ninp
-      else
-        term.setCursorPos(positions.nameLen + 3, positions.startY + p)
-        io.write(string.rep(' ', mx - 14))
-        term.setCursorPos(positions.nameLen + 3, positions.startY + p)
-        local col = term.getTextColor()
-        term.setTextColor(ccolors[obj.colors.fg.error])
-        io.write("Not a color.")
-        term.setTextColor(col)
-        os.sleep(2)
-      end
+    if ccolors[ninp] then
+      return ninp
+    elseif ccolors[inp] then
+      return ccolors[inp]
     else
-      -- color-name input
-      if ccolors[inp] then
-        return ccolors[inp]
-      else
-        term.setCursorPos(positions.nameLen + 3, positions.startY + p)
-        io.write(string.rep(' ', mx - 14))
-        term.setCursorPos(positions.nameLen + 3, positions.startY + p)
-        local col = term.getTextColor()
-        term.setTextColor(ccolors[obj.colors.fg.error])
-        io.write("Not a color.")
-        term.setTextColor(col)
-        os.sleep(2)
-      end
+      drawError("Not a color.", p, 2, obj.colors.fg.error)
     end
   end
 end
 
 -- Actually read the password
 local function getPass(obj, set, p)
-  local mx, my = term.getSize()
-
   while true do
     -- get user initial input
     term.setCursorPos(2, positions.startY + p)
@@ -610,22 +574,13 @@ local function getPass(obj, set, p)
 
       return pass, salt
     else
-      -- the passwords did not match (typo or something else)
-      term.setCursorPos(positions.nameLen + 3, positions.startY + p)
-      io.write(string.rep(' ', mx - 14))
-      term.setCursorPos(positions.nameLen + 3, positions.startY + p)
-      local col = term.getTextColor()
-      term.setTextColor(ccolors[obj.colors.fg.error])
-      io.write("Not matching!")
-      term.setTextColor(col)
-      os.sleep(2)
+      drawError("Not matching!", p, 2, obj.colors.fg.error)
     end
   end
 end
 
 -- ask the user if they are sure they want to edit the password
 local function askPass(obj, set, p)
-  local mx, my = term.getSize()
   local confirm = false
 
   term.setTextColor(ccolors[obj.colors.fg.listTitle])
@@ -656,7 +611,6 @@ end
 
 -- edit the setting at index i, in terminal position p
 local function edit(obj, i, p)
-  local mx, my = term.getSize()
   local tp, set = iter(obj, i)
   local final
   if tp ~= 2 then
@@ -707,11 +661,7 @@ local function edit(obj, i, p)
     final = settings.get(set.setting)
   else
     -- if the type is uneditable, say it's uneditable.
-    local col = term.getTextColor()
-    term.setTextColor(ccolors[obj.colors.fg.error])
-    io.write(string.format("Cannot edit type '%s'.", set.tp))
-    term.setTextColor(col)
-    os.sleep(2)
+    drawError(string.format("Cannot edit type '%s'.", set.tp), p, 2, obj.colors.fg.error)
   end
   return obj.settings.location, set.setting, final, obj
 end
