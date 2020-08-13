@@ -863,7 +863,18 @@ local function display(obj, fCallback, timeout)
             return
           elseif seltp == 2 then -- item type is a setting
             local sSettingsFileName, _1, _2, _3 = edit(obj, sel, pointer)
-            fCallback(sSettingsFileName, _1, _2, _3) -- edit the setting
+            local cbFormat = "Bad callback return value %d: Expected %s, got %s."
+            local bNotOk, sErr, nDisplayTime = fCallback(sSettingsFileName, _1, _2, _3) -- edit the setting
+
+            -- argument 1 check
+            assert(type(bNotOk) == "boolean" or type(bNotOk) == "nil", string.format(cbFormat, 1, "boolean or nil", type(bNotOk)))
+            if bNotOk then
+              -- arg 2/3 check
+              assert(type(sErr) == "string", string.format(cbFormat, 2, "string", type(sErr)))
+              assert(type(nDisplayTime) == "number" or type(nDisplayTime) == "nil", string.format(cbFormat, 3, "number or nil", type(nDisplayTime)))
+
+              drawError(sErr, pointer, nDisplayTime or 2, obj.colors.fg.error)
+            end
             settings.save(sSettingsFileName)
           elseif seltp == 3 then -- item type is a subPage
             -- get the page
