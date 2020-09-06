@@ -609,6 +609,36 @@ local function askPass(obj, set, p)
   end
 end
 
+local function getLong(saveName)
+  local sCurrentDir = fs.combine(fs.getDir(shell.getRunningProgram()), ".TampererLongData")
+  if not fs.exists(sCurrentDir) then
+    fs.makeDir(sCurrentDir)
+  end
+  if not fs.exists(fs.combine(sCurrentDir, saveName)) then
+    local ok, err = io.open(fs.combine(sCurrentDir, saveName), 'w')
+    :write("")
+    :close()
+  end
+
+  term.setBackgroundColor(colors.gray)
+  for y = 3, positions.Y - 3 do
+    term.setCursorPos(1, y)
+    term.write(string.rep(' ', positions.X))
+  end
+
+  local tWindow = window.create(term.current(), 2, 4, positions.X - 2, positions.Y - 7)
+  --os.run(table envVars, string path, ...)
+  local oldT = {shell.openTab, shell.switchTab}
+  shell.openTab = nil shell.switchTab = nil
+
+  local old = term.redirect(tWindow)
+  os.run({shell = shell}, shell.resolveProgram "edit", "/" .. fs.combine(sCurrentDir, saveName))
+  term.redirect(old)
+
+  shell.openTab = oldT[1] shell.switchTab = oldT[2]
+  return io.lines(fs.combine(sCurrentDir, saveName))() or ""
+end
+
 -- edit the setting at index i, in terminal position p
 local function edit(obj, i, p)
   local tp, set = iter(obj, i)
@@ -659,6 +689,11 @@ local function edit(obj, i, p)
       settings.save(obj.settings.location)
     end
     final = settings.get(set.setting)
+  elseif set.tp == "longstring" then
+    local sete = settings.get(set.setting)
+    sete = getLong(set.setting, sete)
+    settings.set(set.setting, sete)
+    settings.save(obj.settings.location)
   else
     -- if the type is uneditable, say it's uneditable.
     drawError(string.format("Cannot edit type '%s'.", set.tp), p, 2, obj.colors.fg.error)
@@ -701,113 +736,120 @@ local function display(obj, fCallback, timeout)
   local function mainLoop()
     while true do
       -- clear
-      term.setBackgroundColor(colors[obj.colors.bg.main])
-      term.setTextColor(colors[obj.colors.fg.title])
-      term.clear()
+      local seltp, selected
+      local function redraw()
+        term.setBackgroundColor(colors[obj.colors.bg.main])
+        term.setTextColor(colors[obj.colors.fg.title])
+        term.clear()
 
-      -- display the page title
-      term.setCursorPos(1, 1)
-      io.write(obj.name)
+        -- display the page title
+        term.setCursorPos(1, 1)
+        io.write(obj.name)
 
-      -- display the page info
-      term.setCursorPos(1, 2)
-      term.setTextColor(colors[obj.colors.fg.info])
-      io.write(obj.info)
+        -- display the page info
+        term.setCursorPos(1, 2)
+        term.setTextColor(colors[obj.colors.fg.info])
+        io.write(obj.info)
 
-      -- display the four items.
-      for i = 0, positions.items - 1 do
-        local ctype, cur = iter(obj, pStart + i)
-        term.setCursorPos(2, 5 + i)
+        -- display the four items.
+        for i = 0, positions.items - 1 do
+          local ctype, cur = iter(obj, pStart + i)
+          term.setCursorPos(2, 5 + i)
 
-        -- discriminate by type
-        if ctype == 1 then
-          -- selection
-          term.setTextColor(colors[obj.colors.fg.listTitle])
-          io.write(cur.title)
+          -- discriminate by type
+          if ctype == 1 then
+            -- selection
+            term.setTextColor(colors[obj.colors.fg.listTitle])
+            io.write(cur.title)
 
-          term.setCursorPos(positions.nameLen + 3, 5 + i)
-          term.setTextColor(colors[obj.colors.fg.listInfo])
-          io.write(cur.info)
-        elseif ctype == 2 then
-          -- setting changer
-          local set = settings.get(cur.setting)
-          if type(set) == "string" and string.len(set) > positions.infoLen then
-            set = set:sub(1, positions.infoLen - 3)
-            set = set .. "..."
-          end
-
-          term.setTextColor(colors[obj.colors.fg.listTitle])
-          io.write(cur.title)
-
-          term.setCursorPos(positions.nameLen + 3, 5 + i)
-          term.setTextColor(colors[obj.colors.fg.listInfo])
-          if cur.tp == "string" or cur.tp == "number" then
-            io.write(set or "Error: empty")
-          elseif cur.tp == "boolean" then
-            if set == true then
-              io.write("  false [ true ]")
-            elseif set == false then
-              io.write("[ false ] true")
-            else
-              -- nil or broke
-              io.write("? false ? true ?")
+            term.setCursorPos(positions.nameLen + 3, 5 + i)
+            term.setTextColor(colors[obj.colors.fg.listInfo])
+            io.write(cur.info)
+          elseif ctype == 2 then
+            -- setting changer
+            local set = settings.get(cur.setting)
+            if type(set) == "string" and string.len(set) > positions.infoLen then
+              set = set:sub(1, positions.infoLen - 3)
+              set = set .. "..."
             end
-          elseif cur.tp == "color" then
-            io.write(set and string.format("%s (%d)", ccolors[set], set)
-                     or "? (nil)")
-          elseif cur.tp == "password" then
-            local cv = {plain = "Plaintext", sha256 = "sha256", sha256salt = "sha256 + salt", kristwallet = "Kristwallet"}
-            if pocket then
-              io.write(set and cv[cur.store] or "Not yet set")
-            else
-              io.write(set and "Stored as " .. cv[cur.store] or "Not yet set")
-            end
-          else
-            io.write(pocket and "Unsupported" or "Unsupported type.")
-          end
-        elseif ctype == 3 then
-          -- subpage selection
-          term.setTextColor(colors[obj.colors.fg.listTitle])
-          io.write(cur.name)
 
-          term.setTextColor(colors[obj.colors.fg.listInfo])
-          term.setCursorPos(positions.nameLen + 3, 5 + i)
-          io.write(cur.info)
-        elseif ctype ~= 0 then
-          io.write("Broken.")
+            term.setTextColor(colors[obj.colors.fg.listTitle])
+            io.write(cur.title)
+
+            term.setCursorPos(positions.nameLen + 3, 5 + i)
+            term.setTextColor(colors[obj.colors.fg.listInfo])
+            if cur.tp == "string" or cur.tp == "number" then
+              io.write(set or "Error: empty")
+            elseif cur.tp == "boolean" then
+              if set == true then
+                io.write("  false [ true ]")
+              elseif set == false then
+                io.write("[ false ] true")
+              else
+                -- nil or broke
+                io.write("? false ? true ?")
+              end
+            elseif cur.tp == "color" then
+              io.write(set and string.format("%s (%d)", ccolors[set], set)
+                       or "? (nil)")
+            elseif cur.tp == "password" then
+              local cv = {plain = "Plaintext", sha256 = "sha256", sha256salt = "sha256 + salt", kristwallet = "Kristwallet"}
+              if pocket then
+                io.write(set and cv[cur.store] or "Not yet set")
+              else
+                io.write(set and "Stored as " .. cv[cur.store] or "Not yet set")
+              end
+            elseif cur.tp == "longstring" then
+              io.write(set and string.format(string.format("%%.%ds%%s", #tostring(set) > positions.infoLen and positions.infoLen - 3 or positions.infoLen), set, #tostring(set) > positions.infoLen and "..." or ""))
+            else
+              io.write(pocket and "Unsupported" or "Unsupported type.")
+            end
+          elseif ctype == 3 then
+            -- subpage selection
+            term.setTextColor(colors[obj.colors.fg.listTitle])
+            io.write(cur.name)
+
+            term.setTextColor(colors[obj.colors.fg.listInfo])
+            term.setCursorPos(positions.nameLen + 3, 5 + i)
+            io.write(cur.info)
+          elseif ctype ~= 0 then
+            io.write("Broken.")
+          end
         end
+
+        -- get the selected item
+        seltp, selected = iter(obj, sel)
+
+        -- print the info of the selected item
+        term.setTextColor(colors[obj.colors.fg.bigInfo])
+        term.setCursorPos(1, positions.Y - 2)
+        io.write(selected.bigInfo)
+
+        -- print the pointer
+        term.setCursorPos(1, positions.startY + pointer)
+        term.setTextColor(colors[obj.colors.fg.selector])
+        io.write(">")
+
+        -- draw down arrow
+        term.setCursorPos(1, positions.startY + positions.items + 1)
+        if pStart + positions.items > size(obj) + 1 then
+          term.setTextColor(colors[obj.colors.fg.arrowDisabled])
+        else
+          term.setTextColor(colors[obj.colors.fg.arrowEnabled])
+        end
+        io.write(string.char(31))
+
+        -- draw up arrow
+        term.setCursorPos(1, positions.startY)
+        if pStart > 1 then
+          term.setTextColor(colors[obj.colors.fg.arrowEnabled])
+        else
+          term.setTextColor(colors[obj.colors.fg.arrowDisabled])
+        end
+        io.write(string.char(30))
       end
 
-      -- get the selected item
-      local seltp, selected = iter(obj, sel)
-
-      -- print the info of the selected item
-      term.setTextColor(colors[obj.colors.fg.bigInfo])
-      term.setCursorPos(1, positions.Y - 2)
-      io.write(selected.bigInfo)
-
-      -- print the pointer
-      term.setCursorPos(1, positions.startY + pointer)
-      term.setTextColor(colors[obj.colors.fg.selector])
-      io.write(">")
-
-      -- draw down arrow
-      term.setCursorPos(1, positions.startY + positions.items + 1)
-      if pStart + positions.items > size(obj) + 1 then
-        term.setTextColor(colors[obj.colors.fg.arrowDisabled])
-      else
-        term.setTextColor(colors[obj.colors.fg.arrowEnabled])
-      end
-      io.write(string.char(31))
-
-      -- draw up arrow
-      term.setCursorPos(1, positions.startY)
-      if pStart > 1 then
-        term.setTextColor(colors[obj.colors.fg.arrowEnabled])
-      else
-        term.setTextColor(colors[obj.colors.fg.arrowDisabled])
-      end
-      io.write(string.char(30))
+      redraw()
 
       local function upSel()
         sel = sel - 1 -- move the selected item up one
@@ -863,6 +905,7 @@ local function display(obj, fCallback, timeout)
             return
           elseif seltp == 2 then -- item type is a setting
             local sSettingsFileName, _1, _2, _3 = edit(obj, sel, pointer)
+            redraw()
             local cbFormat = "Bad callback return value %d: Expected %s, got %s."
             local bNotOk, sErr, nDisplayTime = fCallback(sSettingsFileName, _1, _2, _3) -- edit the setting
 
