@@ -636,7 +636,7 @@ local function getLong(saveName)
   term.redirect(old)
 
   shell.openTab = oldT[1] shell.switchTab = oldT[2]
-  return io.lines(fs.combine(sCurrentDir, saveName))() or ""
+  return saveName
 end
 
 -- edit the setting at index i, in terminal position p
@@ -691,9 +691,7 @@ local function edit(obj, i, p)
     final = settings.get(set.setting)
   elseif set.tp == "longstring" then
     local sete = settings.get(set.setting)
-    sete = getLong(set.setting, sete)
-    settings.set(set.setting, sete)
-    settings.save(obj.settings.location)
+    getLong(sete)
   else
     -- if the type is uneditable, say it's uneditable.
     drawError(string.format("Cannot edit type '%s'.", set.tp), p, 2, obj.colors.fg.error)
@@ -804,7 +802,7 @@ local function display(obj, fCallback, timeout)
                 set
                 and string.format(
                   string.format(
-                    "\%.%ds\%s",
+                    "%%.%ds%%s",
                     #tostring(set) > positions.infoLen
                     and positions.infoLen - 3
                     or positions.infoLen
