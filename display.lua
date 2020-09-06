@@ -800,7 +800,22 @@ local function display(obj, fCallback, timeout)
                 io.write(set and "Stored as " .. cv[cur.store] or "Not yet set")
               end
             elseif cur.tp == "longstring" then
-              io.write(set and string.format(string.format("%%.%ds%%s", #tostring(set) > positions.infoLen and positions.infoLen - 3 or positions.infoLen), set, #tostring(set) > positions.infoLen and "..." or ""))
+              io.write(
+                set
+                and string.format(
+                  string.format(
+                    "\%.%ds\%s",
+                    #tostring(set) > positions.infoLen
+                    and positions.infoLen - 3
+                    or positions.infoLen
+                  ),
+                  set,
+                  #tostring(set) > positions.infoLen
+                  and "..."
+                  or ""
+                )
+                or ""
+              )
             else
               io.write(pocket and "Unsupported" or "Unsupported type.")
             end
