@@ -692,6 +692,12 @@ local function edit(obj, i, p)
   elseif set.tp == "longstring" then
     local sete = settings.get(set.setting)
     getLong(sete)
+  elseif set.tp == "event" then
+    if set.eventArgs and type(set.eventArgs) == "table" then
+      os.queueEvent(set.event, table.unpack(set.eventArgs))
+    else
+      os.queueEvent(set.event, set.eventArgs)
+    end
   else
     -- if the type is uneditable, say it's uneditable.
     drawError(string.format("Cannot edit type '%s'.", set.tp), p, 2, obj.colors.fg.error)
@@ -814,6 +820,8 @@ local function display(obj, fCallback, timeout)
                 )
                 or ""
               )
+            elseif cur.tp == "event" then
+              io.write(cur.info or "Queue event.")
             else
               io.write(pocket and "Unsupported" or "Unsupported type.")
             end
