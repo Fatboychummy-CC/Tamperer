@@ -869,6 +869,12 @@ local function display(obj, fCallback, timeout)
         end
         io.write(string.char(30))
       end
+      local _drawError = drawError
+      local function drawError(...)
+        redraw()
+
+        _drawError(...)
+      end
 
       redraw()
 
