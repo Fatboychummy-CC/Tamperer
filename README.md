@@ -19,8 +19,10 @@ interactive settings menus for your programs with ease.
 ## Installation
 Run the installer script to download Tamperer and its dependencies.
 
-It will ask you if you want to install everything, or without ccryptolib.
-If you need to work with passwords, you should install with ccryptolib.
+> [!IMPORTANT]
+> Tamperer 2.0 requires `ccryptolib` for password hashing functionality. The
+> installer will ask if you want to install it alongside Tamperer. If you choose
+> not to install it, password-related features will not work.
 
 **Installation Command**
 ```
