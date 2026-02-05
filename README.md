@@ -42,6 +42,13 @@ to the menu and display it to the user.
 In order to catch changes to values, you can provide a callback function that
 will be called whenever a value is changed.
 
+> [!WARNING]
+> If you are planning to use this library in its current state, please be aware
+> that it is still in active development, and `menu:add_selection` wil likely
+> be replaced with a more robust and specific system (i.e: `menu:add_boolean`,
+> `menu:add_number`, etc). The current system is a placeholder to allow for
+> quick testing without needing the entire backend to be finished first.
+
 ```lua
 local tamperer = require("tamperer")
 local menu = tamperer.new("Main Menu")
