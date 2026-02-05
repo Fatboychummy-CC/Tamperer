@@ -68,6 +68,7 @@ local TAMPERER_TEMP_DIR = "/.tamperer_tmp/"
 ---| "callback" # fun(self: Tamperer, selection: TampererSelection)
 ---| "submenu"
 ---| "password"
+---| "passwordcallback"
 ---| "file"
 ---| "color"
 ---| "exit" # Exits the currently running menu when selected.
@@ -129,7 +130,9 @@ local function display_value(selection)
   elseif selection.type == "boolean" then
     selection.display_value = selection.value and "[ true ] false" or "  true [ false ]"
   elseif selection.type == "password" then
-    selection.display_value = "pbkdf2"
+    selection.display_value = ('\xb7'):rep(8) -- Display 8 bullet points regardless of password length.
+  elseif selection.type == "passwordcallback" then
+    selection.display_value = "Password protected."
   elseif selection.type == "file" then
     selection.display_value = selection.value or "No file selected"
   elseif selection.type == "color" then
@@ -171,7 +174,9 @@ local function init_sha()
     end
     random = mod
   end
-  random.initWithTiming()
+  if not random.isInit() then
+    random.initWithTiming()
+  end
 end
 
 --- Hash a password using SHA-256.
@@ -501,7 +506,7 @@ local function read_password(self)
   term.setTextColor(colors.yellow)
   flash(x, y, "Enter password", colors.yellow)
   local password = read('\xb7') --[[@as string]]
-  flash(x, y, "Confirm password", colors.yellow, 1.5)
+  flash(x, y, "Confirm password", colors.yellow)
   local confirm = read('\xb7') --[[@as string]]
 
   if password ~= confirm then
@@ -824,6 +829,30 @@ local function read_list(self, options, current)
 end
 
 
+
+--- Compare a password against a stored hash.
+---@param self Tamperer The menu instance.
+---@param selection TampererSelection The selection to compare against.
+---@return boolean correct Whether the password was correct.
+local function compare_password(self, selection)
+  init_sha()
+
+  local x, y = term.getCursorPos()
+  term.setTextColor(self.options.colors.selected.fg)
+  term.setBackgroundColor(self.options.colors.selected.bg)
+  flash(x, y, "Enter password", colors.yellow)
+  local password = read('\xb7') --[[@as string]]
+  local hash = sha256.pbkdf2(password, selection.value.salt, PBKDF2_ITERATIONS)
+
+  if hash == selection.value.hash then
+    flash(x, y, "Password correct.", colors.green)
+    return true
+  end
+  flash(x, y, "Password incorrect.", colors.red, 2)
+  return false
+end
+
+
 --#endregion readers
 
 
@@ -837,7 +866,9 @@ function Tamperer:select()
   end
 
   -- The position on the screen where the selection input is.
-  local x, y = 15, self.state.selected_index + 4
+  local w, h = term.getSize()
+  local midpoint = math.ceil(w * 0.38)
+  local x, y = midpoint, self.state.selected_index + 4
   term.setCursorPos(x, y)
   term.write((' '):rep(50))
   term.setCursorPos(x, y)
@@ -856,6 +887,12 @@ function Tamperer:select()
     local hash, salt = read_password(self)
     hash, salt = hash or selected.value and selected.value.hash, salt or selected.value and selected.value.salt
     selected.value = {hash = hash, salt = salt}
+  elseif selected.type == "passwordcallback" then
+    local correct = compare_password(self, selected)
+
+    if correct then
+      selected.value.callback()
+    end
   elseif selected.type == "file" then
     selected.value = read_file(self, selected.value) or selected.value
   elseif selected.type == "color" then
@@ -967,7 +1004,7 @@ local default_values = {
 ---@param description string|fun(self: TampererSelection): string The description for the selection, or a function that returns it based off of the current state.
 ---@param value any The initial value of the selection. Setting to `nil` will default to type-specific defaults.
 ---@param options string[]? The list of options if type is 'list'.
----@return self self For method chaining.
+---@return TampererSelection selection The newly added selection.
 function Tamperer:add_selection(_type, i_label, label, description, value, options)
   value = value or default_values[_type]
   expect(1, _type, "string")
@@ -1002,6 +1039,11 @@ function Tamperer:add_selection(_type, i_label, label, description, value, optio
     expect(5, value, "string")
   elseif _type == "password" then
     expect(5, value, "nil") -- Previous password should not be passed back to the reader in any way.
+  elseif _type == "passwordcallback" then
+    expect(5, value, "table")
+    field(value, "hash", "string")
+    field(value, "salt", "string")
+    field(value, "callback", "function")
   elseif _type == "file" then
     expect(5, value, "string", "nil")
   elseif _type == "color" then
@@ -1024,7 +1066,7 @@ function Tamperer:add_selection(_type, i_label, label, description, value, optio
   display_value(selection)
   table.insert(self.selections, selection)
 
-  return self
+  return selection
 end
 
 
