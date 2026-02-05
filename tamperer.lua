@@ -243,6 +243,14 @@ end
 ---@return self self For method chaining.
 function Tamperer:draw()
   local w, h = term.getSize()
+
+  -- Allocate most of the space to the value display.
+  -- Turtle: mid 15, label 12, value 24
+  local midpoint = math.ceil(w * 0.38)
+  local max_label_length = midpoint - 3
+  local val_max_length = w - midpoint
+  local max_selections = h - 9
+
   term.setBackgroundColor(self.options.colors.body_bg)
   term.clear()
 
@@ -262,7 +270,7 @@ function Tamperer:draw()
   term.setCursorPos(1, 3)
   term.write(wrapped[2] or "")
 
-  -- Draw the current selection description, max 4 lines.
+  -- Draw the current selection description, max height - 1 (title) - 2 (description) - 4 (selection description) - 2 (scroll arrows)
   -- Pull the description, if needed
   local selected = self.selections[self.state.selected_index + self.state.scroll_offset]
   local description
@@ -271,8 +279,8 @@ function Tamperer:draw()
   else
     description = selected.description
   end
+  ---@cast description string
 
-  ---@diagnostic disable-next-line: param-type-mismatch Lua language server is retarded I stg
   local wrapped = strings.wrap(description, w)
   local size = math.min(4, #wrapped)
   for i = 1, size do
@@ -284,9 +292,9 @@ function Tamperer:draw()
 
   -- Draw the options in the body.
   -- 4 options drawn at a time.
-  ---TODO: Different option counts for different screen sizes
-  ---TODO: Different selection widths for different screen sizes
-  for y = 5, 8 do
+  for i = 1, max_selections do
+    -- for y = 5, 8 do
+    local y = i + 4
     local selection = self.selections[y - 4 + self.state.scroll_offset]
     if not selection then break end -- No more selections to draw.
     if selection == selected then
@@ -309,19 +317,20 @@ function Tamperer:draw()
     else
       label = selection.label
     end
-    ---@diagnostic disable-next-line: param-type-mismatch Lua language server is retarded I stg
-    term.write(label:sub(1, 11)) -- TODO: Different selection widths for different screen sizes
+    ---@cast label string
+
+    term.write(label:sub(1, max_label_length))
 
     -- Get the display value, and display it.
     display_value(selection)
     term.setTextColor(self.options.colors.selection_description.fg)
     term.setBackgroundColor(self.options.colors.selection_description.bg)
-    term.setCursorPos(15, y)
-    term.write(selection.display_value:sub(1, 24)) -- TODO: Different selection widths for different screen sizes
+    term.setCursorPos(midpoint, y)
+    term.write(selection.display_value:sub(1, val_max_length))
   end
 
   -- Draw the scroll arrows, if needed.
-  if #self.selections > 4 then
+  if #self.selections > max_selections then
     term.setCursorPos(1, 4)
     if self.state.scroll_offset > 0 then
       term.setTextColor(self.options.colors.arrows_on.fg)
@@ -332,8 +341,8 @@ function Tamperer:draw()
     end
     term.write('\x1e')
 
-    term.setCursorPos(1, 9)
-    if self.state.scroll_offset + 4 < #self.selections then
+    term.setCursorPos(1, h - 4)
+    if self.state.scroll_offset + max_selections < #self.selections then
       term.setTextColor(self.options.colors.arrows_on.fg)
       term.setBackgroundColor(self.options.colors.arrows_on.bg)
     else
@@ -879,6 +888,9 @@ function Tamperer:run()
     error("Cannot run menu with no selections.", 2)
   end
 
+  local w, h = term.getSize()
+  local max_selections = h - 9
+
   local key_callbacks = {
     [keys.up] = function()
       if self.state.selected_index > 1 then
@@ -889,9 +901,9 @@ function Tamperer:run()
         self.state.scroll_offset = self.state.scroll_offset - 1
       else
         -- Wrap to bottom
-        if #self.selections > 4 then
-          self.state.scroll_offset = #self.selections - 4
-          self.state.selected_index = 4
+        if #self.selections > max_selections then
+          self.state.scroll_offset = #self.selections - max_selections
+          self.state.selected_index = max_selections
         else
           self.state.scroll_offset = 0
           self.state.selected_index = #self.selections
@@ -899,10 +911,10 @@ function Tamperer:run()
       end
     end,
     [keys.down] = function()
-      if self.state.selected_index < math.min(4, #self.selections - self.state.scroll_offset) then
+      if self.state.selected_index < math.min(max_selections, #self.selections - self.state.scroll_offset) then
         -- Select down one.
         self.state.selected_index = self.state.selected_index + 1
-      elseif self.state.scroll_offset + 4 < #self.selections then
+      elseif self.state.scroll_offset + max_selections < #self.selections then
         -- Scroll down one.
         self.state.scroll_offset = self.state.scroll_offset + 1
       else
@@ -1027,15 +1039,5 @@ function Tamperer:set_on_change(callback)
 end
 
 
--- test test test
---read_longstring({options = {colors = {popup_border = {fg = colors.lightGray, bg = colors.black}}}}, "blablabla\nhehehehe\nhohohohoh")
---read_password()
---read_color(nil, colors.red)
-
---[[local obj = Tamperer.new {
-  title = "Test Menu",
-  description = "This is a test menu for the Tamperer library.",
-}
-read_file(obj, ".git")]]
 
 return Tamperer
