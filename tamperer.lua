@@ -8,6 +8,7 @@ end)()
 local strings = require "cc.strings"
 local sha256, random
 local PBKDF2_ITERATIONS = 500
+local PBKDF2_SALT_LENGTH = 16
 local TAMPERER_TEMP_DIR = "/.tamperer_tmp/"
 
 
@@ -68,6 +69,7 @@ local TAMPERER_TEMP_DIR = "/.tamperer_tmp/"
 ---| "callback" # fun(self: Tamperer, selection: TampererSelection)
 ---| "submenu"
 ---| "password"
+---| "passwordnohash"
 ---| "passwordcallback"
 ---| "file"
 ---| "color"
@@ -81,11 +83,98 @@ local TAMPERER_TEMP_DIR = "/.tamperer_tmp/"
 ---@field type TampererTypes The type of the selection.
 ---@field value any The current value of the selection.
 ---@field display_value string The serialized value of the selection, for display purposes.
----@field options string[]? The list of options if type is 'list' or 'selection'.
 
----@class TampererListSelection : TampererSelection
+---@class TampererSelection.Boolean : TampererSelection
+---@field type "boolean"
+---@field value boolean
+
+---@class TampererSelection.List : TampererSelection
 ---@field type "list"
+---@field value integer
 ---@field options string[] The list of options.
+
+---@class TampererSelection.Number : TampererSelection
+---@field type "number"
+---@field value number
+---@field minimum number? The minimum allowable value.
+---@field maximum number? The maximum allowable value.
+
+---@class TampererSelection.String : TampererSelection
+---@field type "string" | "longstring"
+---@field value string
+---@field minimum_length number? The minimum allowable length.
+---@field maximum_length number? The maximum allowable length.
+
+---@class TampererSelection.Callback : TampererSelection
+---@field type "callback"
+---@field value fun(self: Tamperer, selection: TampererSelection) The callback to execute when selected.
+
+---@class TampererSelection.Submenu : TampererSelection
+---@field type "submenu"
+---@field value Tamperer The submenu to open when selected.
+
+---@class TampererSelection.Password : TampererSelection
+---@field type "password"
+---@field value { hash: string, salt: string } The hashed password and salt.
+---@field password_options TampererPasswordOptionsFilled The options used for the password hashing and or requirements.
+
+---@class TampererSelection.PasswordNoHash : TampererSelection
+---@field type "passwordnohash"
+---@field value string The raw password.
+---@field password_options TampererPasswordOptionsFilled The options used for the password hashing and or requirements.
+
+---@class TampererSelection.PasswordCallback : TampererSelection
+---@field type "passwordcallback"
+---@field value { hash: string, salt: string } The hashed password and salt to use for verification.
+---@field callback fun() The callback to execute when the correct password is entered.
+---@field password_options TampererPasswordOptionsFilled The options used for the password hashing and or requirements.
+
+---@class TampererSelection.File : TampererSelection
+---@field type "file"
+---@field value string The file path.
+
+---@class TampererSelection.Color : TampererSelection
+---@field type "color"
+---@field value integer The color code.
+
+---@class TampererSelection.Exit : TampererSelection
+---@field type "exit"
+---@field value nil
+
+---@class TampererPasswordOptionsFilled
+---@field hashing TampererPasswordOptions.Hashing The hashing options.
+---@field requirements TampererPasswordOptions.Requirements The password requirements.
+
+---@class TampererPasswordOptionsFilled.Hashing
+---@field iterations integer The number of iterations to use for PBKDF2 hashing.
+---@field salt_length integer The length of the salt to generate for PBKDF2 hashing.
+
+---@class TampererPasswordOptionsFilled.Requirements
+---@field min_length integer The minimum length required for the password.
+---@field max_length integer The maximum length allowed for the password.
+---@field require_uppercase boolean Whether at least one uppercase letter is required.
+---@field require_lowercase boolean Whether at least one lowercase letter is required.
+---@field require_number boolean Whether at least one number is required.
+---@field require_special boolean Whether at least one special character is required.
+---@field disallowed_characters string A string of characters that are not allowed in the password.
+
+---@class TampererPasswordOptions
+---@field hashing TampererPasswordOptions.Hashing? The hashing options.
+---@field requirements TampererPasswordOptions.Requirements? The password requirements.
+
+---@class TampererPasswordOptions.Hashing
+---@field iterations integer? The number of iterations to use for PBKDF2 hashing, defaults to 500.
+---@field salt_length integer? The length of the salt to generate for PBKDF2 hashing, if a salt is not provided.
+
+---@class TampererPasswordOptions.Requirements
+---@field min_length integer? The minimum length required for the password.
+---@field max_length integer? The maximum length allowed for the password.
+---@field require_uppercase boolean? Whether at least one uppercase letter is required.
+---@field require_lowercase boolean? Whether at least one lowercase letter is required.
+---@field require_number boolean? Whether at least one number is required.
+---@field require_special boolean? Whether at least one special character is required.
+---@field disallowed_characters string? A string of characters that are not allowed in the password.
+
 
 
 
@@ -123,21 +212,43 @@ end
 --- Updates the display value of a selection based on its type and current value.
 ---@param selection TampererSelection The selection to update.
 local function display_value(selection)
+  local w = term.getSize()
+  local midpoint = math.ceil(w * 0.38)
+  local val_max_length = w - midpoint
   if selection.type == "number" or selection.type == "string" or selection.type == "longstring" then
+    ---@cast selection TampererSelection.Number|TampererSelection.String
     selection.display_value = tostring(selection.value)
   elseif selection.type == "list" then
+    ---@cast selection TampererSelection.List
     selection.display_value = selection.options[selection.value] or "Invalid Option"
   elseif selection.type == "boolean" then
+    ---@cast selection TampererSelection.Boolean
     selection.display_value = selection.value and "[ true ] false" or "  true [ false ]"
   elseif selection.type == "password" then
+    ---@cast selection TampererSelection.Password
     selection.display_value = ('\xb7'):rep(8) -- Display 8 bullet points regardless of password length.
+  elseif selection.type == "passwordnohash" then
+    ---@cast selection TampererSelection.PasswordNoHash
+    -- We display less bullet points here to indicate that whatever lib underneath is pulling the raw password.
+    -- This doesn't necessarily mean it's less secure, but it is a hint to the user.
+    selection.display_value = ('\xb7'):rep(6) -- Display 6 bullet points regardless of password length.
   elseif selection.type == "passwordcallback" then
+    ---@cast selection TampererSelection.PasswordCallback
     selection.display_value = "Password protected."
   elseif selection.type == "file" then
-    selection.display_value = selection.value or "No file selected"
+    ---@cast selection TampererSelection.File
+
+    local path = selection.value
+    if #path > val_max_length then
+      path = "..." .. path:sub(-val_max_length + 3)
+    end
+
+    selection.display_value = path
   elseif selection.type == "color" then
+    ---@cast selection TampererSelection.Color
     local color_code, color_name
     if type(selection.value) == "string" then
+      ---@diagnostic disable-next-line: undefined-field
       color_name = selection.value:lower()
       -- Grab the color code from the name.
       color_code = color_lookup[color_name]
@@ -151,8 +262,10 @@ local function display_value(selection)
     else
       selection.display_value = "Invalid color"
     end
-  else
+  elseif selection.type == "callback" or selection.type == "submenu" or selection.type == "exit" then
     selection.display_value = ""
+  else
+    selection.display_value = "Unknown type"
   end
 end
 
@@ -175,19 +288,27 @@ local function init_sha()
     random = mod
   end
   if not random.isInit() then
+    local x, y = term.getCursorPos()
+    term.write((' '):rep(10))
+    term.setCursorPos(x, y)
+    term.write("Init...")
     random.initWithTiming()
+    term.setCursorPos(x, y)
+    term.write((' '):rep(10))
+    term.setCursorPos(x, y)
   end
 end
 
 --- Hash a password using SHA-256.
 ---@param password string The password to hash.
+---@param password_options TampererPasswordOptionsFilled The PBKDF2 options to use.
 ---@return string hash The hashed password.
 ---@return string salt The salt used in hashing.
-local function hash_password(password)
+local function hash_password(password, password_options)
   init_sha()
 
-  local salt = random.random(8)
-  local hash = sha256.pbkdf2(password, salt, PBKDF2_ITERATIONS)
+  local salt = random.random(password_options.hashing.salt_length)
+  local hash = sha256.pbkdf2(password, salt, password_options.hashing.iterations)
 
   return hash, salt
 end
@@ -416,17 +537,28 @@ end
 
 --- Reads a number.
 ---@param self Tamperer The menu instance.
----@param current number The current value.
+---@param selection TampererSelection.Number The selection to read for.
 ---@return number value The read number.
-local function read_number(self, current)
+local function read_number(self, selection)
   local x, y = term.getCursorPos()
   local out
 
   repeat
-    local input = read(nil, nil, nil, tostring(current)) --[[@as string]]
+    local input = read(nil, nil, nil, tostring(selection.value)) --[[@as string]]
     out = tonumber(input)
+
     if not out then
       flash(x, y, "Not a number.", colors.red)
+    end
+
+    if out and out < selection.minimum then
+      flash(x, y, ("Minimum: %d"):format(selection.minimum), colors.red)
+      out = nil
+    end
+
+    if out and out > selection.maximum then
+      flash(x, y, ("Maximum: %d"):format(selection.maximum), colors.red)
+      out = nil
     end
   until out
   ---@cast out number
@@ -436,25 +568,51 @@ end
 
 
 
+--- Reads a string.
+---@param self Tamperer The menu instance.
+---@param selection TampererSelection.String The selection to read for.
+---@return string value The read string.
+local function read_string(self, selection)
+  local x, y = term.getCursorPos()
+  local out
+
+  repeat
+    term.setTextColor(colors.white)
+    out = read(nil, nil, nil, selection.value) --[[@as string]]
+
+    if #out < selection.minimum_length then
+      flash(x, y, ("Minimum length: %d"):format(selection.minimum_length), colors.red)
+      out = nil
+    elseif #out > selection.maximum_length then
+      flash(x, y, ("Maximum length: %d"):format(selection.maximum_length), colors.red)
+      out = nil
+    end
+  until out
+  ---@cast out string
+
+  return out
+end
+
+
+
 --- Reads a "long string"
 --- This works by launching the builtin text editor with a temporary file.
 ---@param self Tamperer The menu instance.
----@param current string The current value.
+---@param selection TampererSelection.String The selection to read for.
 ---@return string value The read string.
-local function read_longstring(self, current)
+local function read_longstring(self, selection)
   fs.makeDir(TAMPERER_TEMP_DIR)
   local tmp_path = fs.combine(TAMPERER_TEMP_DIR, "longstring_" .. os.epoch("utc") .. "_" .. math.random(1000, 9999) .. ".txt")
   local file = fs.open(tmp_path, "w")
   if not file then
     error("Could not open temporary file for long string input.", 0)
   end
-  file.write(current)
+  file.write(selection.value)
   file.close()
 
+  local x, y = term.getCursorPos()
   local w, h = term.getSize()
   local win = window.create(term.current(), 3, 3, w - 4, h - 4)
-
-  fancy_box(self, 2, 2, w - 2, h - 2)
 
   -- Temporarily hide the ability to `run` programs within the `edit` program.
   -- Funnily enough, the check for this is just if `shell.openTab` exists.
@@ -472,21 +630,37 @@ local function read_longstring(self, current)
     end
   end
 
-  -- Run the editor.
-  local old = term.redirect(win)
-  shell.run("edit", tmp_path)
-  term.redirect(old)
+
+
+  local content
+  repeat
+    fancy_box(self, 2, 2, w - 2, h - 2)
+    -- Run the editor.
+    local old = term.redirect(win)
+    shell.run("edit", tmp_path)
+    term.redirect(old)
+
+    local file = fs.open(tmp_path, "r")
+    if not file then
+      error("Could not open temporary file for long string input.", 0)
+    end
+    content = file.readAll() --[[@as string]]
+    file.close()
+
+    self:draw()
+    if #content < selection.minimum_length then
+      flash(x, y, ("Minimum length: %d"):format(selection.minimum_length), colors.red)
+      content = nil
+    elseif #content > selection.maximum_length then
+      flash(x, y, ("Maximum length: %d"):format(selection.maximum_length), colors.red)
+      content = nil
+    end
+  until content
+  ---@cast content string
 
   -- Restore `shell.openTab` and `peripheral.find`.
   shell.openTab = old_open_tab
   peripheral.find = old_find
-
-  local file = fs.open(tmp_path, "r")
-  if not file then
-    error("Could not open temporary file for long string input.", 0)
-  end
-  local content = file.readAll() --[[@as string]]
-  file.close()
 
   fs.delete(TAMPERER_TEMP_DIR)
 
@@ -495,19 +669,74 @@ end
 
 
 
+--- Read in a raw password.
+---@param self Tamperer The menu instance.
+---@param password_options TampererPasswordOptionsFilled The PBKDF2 options to use.
+---@param confirm boolean If true, asks "Confirm password" instead of "Enter password".
+---@return string password The entered password.
+local function raw_password(self, password_options, confirm)
+  expect(2, password_options, "table")
+  if not password_options.requirements.min_length then error("Here!", 3) end
+  local x, y = term.getCursorPos()
+  term.setTextColor(colors.yellow)
+  flash(x, y, confirm and "Confirm password" or "Enter password", colors.yellow)
+
+  local password
+  repeat
+    password = read('\xb7') --[[@as string]]
+
+    if #password < password_options.requirements.min_length then
+      flash(x, y, ("Minimum length: %d"):format(password_options.requirements.min_length), colors.red)
+      password = nil
+    elseif #password > password_options.requirements.max_length then
+      flash(x, y, ("Maximum length: %d"):format(password_options.requirements.max_length), colors.red)
+      password = nil
+    elseif password_options.requirements.require_uppercase and not password:find("%u") then
+      flash(x, y, "Need uppercase", colors.red)
+      password = nil
+    elseif password_options.requirements.require_lowercase and not password:find("%l") then
+      flash(x, y, "Need lowercase", colors.red)
+      password = nil
+    elseif password_options.requirements.require_number and not password:find("%d") then
+      flash(x, y, "Need number", colors.red)
+      password = nil
+    elseif password_options.requirements.require_special and not password:find("%p") then
+      flash(x, y, "Need special", colors.red)
+      password = nil
+    elseif password_options.requirements.disallowed_characters then
+      local disallowed_found = false
+      for i = 1, #password_options.requirements.disallowed_characters do
+        local char = password_options.requirements.disallowed_characters:sub(i, i)
+        if password:find(char, 1, true) then
+          flash(x, y, ("Not allowed: %q"):format(char), colors.red)
+          disallowed_found = true
+          break
+        end
+      end
+      if disallowed_found then
+        password = nil
+      end
+    end
+  until password
+  ---@cast password string
+
+  return password
+end
+
+
+
 --- Read in a password.
 ---@param self Tamperer The menu instance.
+---@param password_options TampererPasswordOptionsFilled The PBKDF2 options to use.
 ---@return string? hash The hashed password.
 ---@return string? salt The salt used in hashing.
-local function read_password(self)
+local function read_password(self, password_options)
   init_sha()
 
   local x, y = term.getCursorPos()
-  term.setTextColor(colors.yellow)
-  flash(x, y, "Enter password", colors.yellow)
-  local password = read('\xb7') --[[@as string]]
-  flash(x, y, "Confirm password", colors.yellow)
-  local confirm = read('\xb7') --[[@as string]]
+  local password = raw_password(self, password_options, false)
+  term.setCursorPos(x, y)
+  local confirm = raw_password(self, password_options, true)
 
   if password ~= confirm then
     flash(x, y, "Passwords do not match.", colors.red, 2)
@@ -521,8 +750,33 @@ local function read_password(self)
   term.write((' '):rep(#password))
   term.setCursorPos(x, y)
   term.write("Hashing...")
-  return hash_password(password)
+  return hash_password(password, password_options)
 end
+
+
+
+--- Compare a password against a stored hash. Used for password callbacks.
+---@param self Tamperer The menu instance.
+---@param selection TampererSelection.PasswordCallback The selection to compare against.
+---@return boolean correct Whether the password was correct.
+local function compare_password(self, selection)
+  init_sha()
+
+  local x, y = term.getCursorPos()
+  term.setTextColor(self.options.colors.selected.fg)
+  term.setBackgroundColor(self.options.colors.selected.bg)
+  flash(x, y, "Enter password", colors.yellow)
+  local password = raw_password(self, selection.password_options, false)
+  local hash = sha256.pbkdf2(password, selection.value.salt, selection.password_options.hashing.iterations)
+
+  if hash == selection.value.hash then
+    flash(x, y, "Password correct.", colors.green)
+    return true
+  end
+  flash(x, y, "Password incorrect.", colors.red, 2)
+  return false
+end
+
 
 
 ---@class TampererTreeNode
@@ -829,30 +1083,6 @@ local function read_list(self, options, current)
 end
 
 
-
---- Compare a password against a stored hash.
----@param self Tamperer The menu instance.
----@param selection TampererSelection The selection to compare against.
----@return boolean correct Whether the password was correct.
-local function compare_password(self, selection)
-  init_sha()
-
-  local x, y = term.getCursorPos()
-  term.setTextColor(self.options.colors.selected.fg)
-  term.setBackgroundColor(self.options.colors.selected.bg)
-  flash(x, y, "Enter password", colors.yellow)
-  local password = read('\xb7') --[[@as string]]
-  local hash = sha256.pbkdf2(password, selection.value.salt, PBKDF2_ITERATIONS)
-
-  if hash == selection.value.hash then
-    flash(x, y, "Password correct.", colors.green)
-    return true
-  end
-  flash(x, y, "Password incorrect.", colors.red, 2)
-  return false
-end
-
-
 --#endregion readers
 
 
@@ -874,36 +1104,54 @@ function Tamperer:select()
   term.setCursorPos(x, y)
 
   if selected.type == "number" then
-    selected.value = read_number(self, selected.value) or selected.value
+    ---@cast selected TampererSelection.Number
+    selected.value = read_number(self, selected) or selected.value
   elseif selected.type == "string" then
-    selected.value = read(nil, nil, nil, selected.value) or selected.value
+    ---@cast selected TampererSelection.String
+    selected.value = read_string(self, selected)
   elseif selected.type == "longstring" then
-    selected.value = read_longstring(self, selected.value) or selected.value
+    ---@cast selected TampererSelection.String
+    selected.value = read_longstring(self, selected) or selected.value
   elseif selected.type == "boolean" then
+    ---@cast selected TampererSelection.Boolean
     selected.value = not selected.value
   elseif selected.type == "list" then
+    ---@cast selected TampererSelection.List
     selected.value = read_list(self, selected.options, selected.value) or selected.value
   elseif selected.type == "password" then
-    local hash, salt = read_password(self)
-    hash, salt = hash or selected.value and selected.value.hash, salt or selected.value and selected.value.salt
-    selected.value = {hash = hash, salt = salt}
-  elseif selected.type == "passwordcallback" then
-    local correct = compare_password(self, selected)
+    ---@cast selected TampererSelection.Password
 
+    local hash, salt = read_password(self, selected.password_options)
+    if not hash or not salt then
+      return false
+    end
+    selected.value = {hash = hash, salt = salt}
+  elseif selected.type == "passwordnohash" then
+    ---@cast selected TampererSelection.PasswordNoHash
+    local password = raw_password(self, selected.password_options, false)
+    selected.value = password
+  elseif selected.type == "passwordcallback" then
+    ---@cast selected TampererSelection.PasswordCallback
+    local correct = compare_password(self, selected)
     if correct then
-      selected.value.callback()
+      selected.callback()
     end
   elseif selected.type == "file" then
+    ---@cast selected TampererSelection.File
     selected.value = read_file(self, selected.value) or selected.value
   elseif selected.type == "color" then
+    ---@cast selected TampererSelection.Color
     selected.value = read_color(self, selected.value) or selected.value
   elseif selected.type == "callback" then
+    ---@cast selected TampererSelection.Callback
     selected.value(self, selected)
     return false
   elseif selected.type == "submenu" then
+    ---@cast selected TampererSelection.Submenu
     selected.value:run()
     return false
   elseif selected.type == "exit" then
+    ---@cast selected TampererSelection.Exit
     -- Exit the current menu. This is handled by returning early and not calling on_change.
     return true
   else
@@ -984,84 +1232,393 @@ end
 
 
 
-local default_values = {
-  number = 0,
-  string = "",
-  longstring = "",
-  password = nil,
-  boolean = false,
-  list = 1,
-  callback = function() end,
-  submenu = nil,
-  file = "",
-  color = colors.white,
-}
-
---- Add a selection to the menu.
----@param _type TampererTypes The type of the selection.
+--- Adds a number input to the menu.
 ---@param i_label string The internal label for the selection. This label is meant for identifying the selection programmatically, and should be something easy to code around.
----@param label string|fun(self: TampererSelection): string The displayed label for the selection, or a function that returns it based off of the current state.
+---@param display_label string|fun(self: TampererSelection): string The displayed label for the selection, or a function that returns it based off of the current state.
 ---@param description string|fun(self: TampererSelection): string The description for the selection, or a function that returns it based off of the current state.
----@param value any The initial value of the selection. Setting to `nil` will default to type-specific defaults.
----@param options string[]? The list of options if type is 'list'.
----@return TampererSelection selection The newly added selection.
-function Tamperer:add_selection(_type, i_label, label, description, value, options)
-  value = value or default_values[_type]
-  expect(1, _type, "string")
-  expect(2, i_label, "string")
-  expect(3, label, "string", "function")
-  expect(4, description, "string", "function")
-  -- expect(5, nuh uh)
-  expect(5, options, "table", "nil")
+---@param value number? The initial value of the selection. Setting to `nil` will default to 0.
+---@param minimum number? The minimum allowed value.
+---@param maximum number? The maximum allowed value.
+---@return TampererSelection.Number selection The newly added selection.
+function Tamperer:add_number(i_label, display_label, description, value, minimum, maximum)
+  expect(1, i_label, "string")
+  expect(2, display_label, "string", "function")
+  expect(3, description, "string", "function")
+  expect(4, value, "number", "nil")
 
-  if _type == "list" then
-    expect(6, options, "table")
-    ---@cast options string[]
-    for i, option in ipairs(options) do
-      if type(option) ~= "string" then
-        error(("Invalid option %d: expected string, got %s"):format(i, type(option)), 2)
-      end
+  ---@type TampererSelection.Number
+  local selection = {
+    type = "number",
+    i_label = i_label,
+    label = display_label,
+    description = description,
+    value = value or 0,
+    display_value = "",
+    minimum = minimum or -math.huge,
+    maximum = maximum or math.huge,
+  }
+  display_value(selection)
+  table.insert(self.selections, selection)
+
+  return selection
+end
+
+
+--- Adds a string input to the menu.
+---@param i_label string The internal label for the selection. This label is meant for identifying the selection programmatically, and should be something easy to code around.
+---@param display_label string|fun(self: TampererSelection): string The displayed label for the selection, or a function that returns it based off of the current state.
+---@param description string|fun(self: TampererSelection): string The description for the selection, or a function that returns it based off of the current state.
+---@param value string? The initial value of the selection. Setting to `nil` will default to "".
+---@param long boolean? Whether this is a "long string" input. Opens up an `edit` session when selected. Defaults to false.
+---@param minimum_length number? The minimum allowed length of the string.
+---@param maximum_length number? The maximum allowed length of the string.
+---@return TampererSelection.String selection The newly added selection.
+function Tamperer:add_string(i_label, display_label, description, value, long, minimum_length, maximum_length)
+  expect(1, i_label, "string")
+  expect(2, display_label, "string", "function")
+  expect(3, description, "string", "function")
+  expect(4, value, "string", "nil")
+  expect(5, long, "boolean", "nil")
+
+  ---@type TampererSelection.String
+  local selection = {
+    type = long and "longstring" or "string",
+    i_label = i_label,
+    label = display_label,
+    description = description,
+    value = value or "",
+    display_value = "",
+    minimum_length = minimum_length,
+    maximum_length = maximum_length,
+  }
+  display_value(selection)
+  table.insert(self.selections, selection)
+
+  return selection
+end
+
+
+
+--- Adds a boolean (true/false) toggle to the menu.
+---@param i_label string The internal label for the selection. This label is meant for identifying the selection programmatically, and should be something easy to code around.
+---@param display_label string|fun(self: TampererSelection): string The displayed label for the selection, or a function that returns it based off of the current state.
+---@param description string|fun(self: TampererSelection): string The description for the selection, or a function that returns it based off of the current state.
+---@param value boolean? The initial value of the selection. Setting to `nil` will default to false.
+---@return TampererSelection.Boolean selection The newly added selection.
+function Tamperer:add_boolean(i_label, display_label, description, value)
+  expect(1, i_label, "string")
+  expect(2, display_label, "string", "function")
+  expect(3, description, "string", "function")
+  expect(4, value, "boolean", "nil")
+
+  ---@type TampererSelection.Boolean
+  local selection = {
+    type = "boolean",
+    i_label = i_label,
+    label = display_label,
+    description = description,
+    value = value or false,
+    display_value = "",
+  }
+  display_value(selection)
+  table.insert(self.selections, selection)
+
+  return selection
+end
+
+
+
+--- Adds a list option to the menu. Selecting it prompts the user to select from a list of options.
+---@param i_label string The internal label for the selection. This label is meant for identifying the selection programmatically, and should be something easy to code around.
+---@param display_label string|fun(self: TampererSelection): string The displayed label for the selection, or a function that returns it based off of the current state.
+---@param description string|fun(self: TampererSelection): string The description for the selection, or a function that returns it based off of the current state.
+---@param options string[] The list of options.
+---@param value integer? The initial index of the selection. Setting to `nil` will default to 1.
+---@return TampererSelection.List selection The newly added selection.
+function Tamperer:add_list(i_label, display_label, description, options, value)
+  expect(1, i_label, "string")
+  expect(2, display_label, "string", "function")
+  expect(3, description, "string", "function")
+  expect(4, options, "table")
+  expect(5, value, "number", "nil")
+
+  for i, option in ipairs(options) do
+    if type(option) ~= "string" then
+      error(("Invalid option %d: expected string, got %s"):format(i, type(option)), 2)
     end
-    if #options == 0 then
-      error("Lists must have at least one option.", 2)
-    end
-  elseif _type == "callback" then
-    expect(5, value, "function")
-  elseif _type == "submenu" then
-    expect(5, value, "table", "nil")
-  elseif _type == "number" then
-    expect(5, value, "number")
-  elseif _type == "string" then
-    expect(5, value, "string")
-  elseif _type == "boolean" then
-    expect(5, value, "boolean")
-  elseif _type == "longstring" then
-    expect(5, value, "string")
-  elseif _type == "password" then
-    expect(5, value, "nil") -- Previous password should not be passed back to the reader in any way.
-  elseif _type == "passwordcallback" then
-    expect(5, value, "table")
-    field(value, "hash", "string")
-    field(value, "salt", "string")
-    field(value, "callback", "function")
-  elseif _type == "file" then
-    expect(5, value, "string", "nil")
-  elseif _type == "color" then
-    expect(5, value, "number", "nil")
-  elseif _type == "exit" then
-    -- Do nothing, exit type doesn't need a value or options.
-  else
-    error("Invalid selection type: " .. tostring(_type), 2)
+  end
+  if #options == 0 then
+    error("Lists must have at least one option.", 2)
   end
 
+  ---@type TampererSelection.List
   local selection = {
-    type = _type,
+    type = "list",
     i_label = i_label,
-    label = label,
+    label = display_label,
     description = description,
-    value = value or default_values[_type],
+    value = value or 1,
     display_value = "",
     options = options,
+  }
+  display_value(selection)
+  table.insert(self.selections, selection)
+
+  return selection
+end
+
+
+
+--- Adds a callback to the menu. Selecting it will run the given callback function.
+---@param i_label string The internal label for the selection. This label is meant for identifying the selection programmatically, and should be something easy to code around.
+---@param display_label string|fun(self: TampererSelection): string The displayed label for the selection, or a function that returns it based off of the current state.
+---@param description string|fun(self: TampererSelection): string The description for the selection, or a function that returns it based off of the current state.
+---@param callback fun(self: Tamperer, selection: TampererSelection) The callback function to run when selected.
+---@return TampererSelection.Callback selection The newly added selection.
+function Tamperer:add_callback(i_label, display_label, description, callback)
+  expect(1, i_label, "string")
+  expect(2, display_label, "string", "function")
+  expect(3, description, "string", "function")
+  expect(4, callback, "function")
+
+  ---@type TampererSelection.Callback
+  local selection = {
+    type = "callback",
+    i_label = i_label,
+    label = display_label,
+    description = description,
+    value = callback,
+    display_value = "",
+  }
+  display_value(selection)
+  table.insert(self.selections, selection)
+
+  return selection
+end
+
+
+
+--- Adds a submenu to the menu. Selecting it will call `:run()` on the given submenu.
+---@param i_label string The internal label for the selection. This label is meant for identifying the selection programmatically, and should be something easy to code around.
+---@param display_label string|fun(self: TampererSelection): string The displayed label for the selection, or a function that returns it based off of the current state.
+---@param description string|fun(self: TampererSelection): string The description for the selection, or a function that returns it based off of the current state.
+---@param submenu Tamperer The submenu instance.
+---@return TampererSelection.Submenu selection The newly added selection.
+function Tamperer:add_submenu(i_label, display_label, description, submenu)
+  expect(1, i_label, "string")
+  expect(2, display_label, "string", "function")
+  expect(3, description, "string", "function")
+  expect(4, submenu, "table")
+
+  ---@type TampererSelection.Submenu
+  local selection = {
+    type = "submenu",
+    i_label = i_label,
+    label = display_label,
+    description = description,
+    value = submenu,
+    display_value = "",
+  }
+  display_value(selection)
+  table.insert(self.selections, selection)
+
+  return selection
+end
+
+
+
+--- Pushes password options into a selection.
+---@param selection TampererSelection.Password|TampererSelection.PasswordNoHash|TampererSelection.PasswordCallback The selection to push options into.
+---@param password_options TampererPasswordOptions? The PBKDF2 options to use.
+local function push_options(selection, password_options)
+  if not password_options then
+    return
+  end
+  selection.password_options.hashing.iterations = password_options.hashing and password_options.hashing.iterations or PBKDF2_ITERATIONS
+  selection.password_options.hashing.salt_length = password_options.hashing and password_options.hashing.salt_length or PBKDF2_SALT_LENGTH
+  selection.password_options.requirements.require_uppercase = password_options.requirements and password_options.requirements.require_uppercase or false
+  selection.password_options.requirements.require_lowercase = password_options.requirements and password_options.requirements.require_lowercase or false
+  selection.password_options.requirements.require_number = password_options.requirements and password_options.requirements.require_number or false
+  selection.password_options.requirements.require_special = password_options.requirements and password_options.requirements.require_special or false
+  selection.password_options.requirements.disallowed_characters = password_options.requirements and password_options.requirements.disallowed_characters or ""
+  selection.password_options.requirements.min_length = password_options.requirements and password_options.requirements.min_length or -math.huge
+  selection.password_options.requirements.max_length = password_options.requirements and password_options.requirements.max_length or math.huge
+end
+
+
+
+--- Adds a password-setting field to the menu.
+--- If `no_hash` is true, the password will be stored in plaintext (not recommended), and only requested once.
+--- If `no_hash` is false or nil, the password will be hashed using PBKDF2, and requested twice for confirmation.
+---@param i_label string The internal label for the selection. This label is meant for identifying the selection programmatically, and should be something easy to code around.
+---@param display_label string|fun(self: TampererSelection): string The displayed label for the selection, or a function that returns it based off of the current state.
+---@param description string|fun(self: TampererSelection): string The description for the selection, or a function that returns it based off of the current state.
+---@param no_hash boolean? Whether to store the password without hashing it. Defaults to false.
+---@param password_options TampererPasswordOptions? Options for PBKDF2 hashing.
+---@return TampererSelection.Password|TampererSelection.PasswordNoHash selection The newly added selection.
+function Tamperer:add_password(i_label, display_label, description, no_hash, password_options)
+  expect(1, i_label, "string")
+  expect(2, display_label, "string", "function")
+  expect(3, description, "string", "function")
+  expect(4, no_hash, "boolean", "nil")
+  expect(5, password_options, "table", "nil")
+
+  ---@type TampererSelection.Password|TampererSelection.PasswordNoHash
+  local selection = {
+    type = no_hash and "passwordnohash" or "password",
+    i_label = i_label,
+    label = display_label,
+    description = description,
+    value = no_hash and "" or {hash = "", salt = ""},
+    display_value = "",
+    password_options = {
+      hashing = {
+        iterations = PBKDF2_ITERATIONS,
+        salt_length = PBKDF2_SALT_LENGTH,
+      },
+      requirements = {
+        require_uppercase = false,
+        require_lowercase = false,
+        require_number = false,
+        require_special = false,
+        disallowed_characters = "",
+      }
+    }
+  }
+
+  push_options(selection, password_options)
+
+  display_value(selection)
+  table.insert(self.selections, selection)
+
+  return selection
+end
+
+
+
+--- Adds a callback that requires the user to enter a correct password before executing.
+---@param i_label string The internal label for the selection. This label is meant for identifying the selection programmatically, and should be something easy to code around.
+---@param display_label string|fun(self: TampererSelection): string The displayed label for the selection, or a function that returns it based off of the current state.
+---@param description string|fun(self: TampererSelection): string The description for the selection, or a function that returns it based off of the current state.
+---@param callback fun(self: Tamperer) The callback function to run when the password is correct.
+---@param password_options TampererPasswordOptions? The PBKDF2 options to use.
+---@return TampererSelection.PasswordCallback selection The newly added selection.
+function Tamperer:add_password_protected_callback(i_label, display_label, description, callback, password_options)
+  expect(1, i_label, "string")
+  expect(2, display_label, "string", "function")
+  expect(3, description, "string", "function")
+  expect(4, callback, "function")
+  expect(5, password_options, "table", "nil")
+
+  ---@type TampererSelection.PasswordCallback
+  local selection = {
+    type = "passwordcallback",
+    i_label = i_label,
+    label = display_label,
+    description = description,
+    value = {hash = "", salt = ""},
+    callback = callback,
+    display_value = "",
+    password_options = {
+      hashing = {
+        iterations = PBKDF2_ITERATIONS,
+        salt_length = PBKDF2_SALT_LENGTH,
+      },
+      requirements = {
+        require_uppercase = false,
+        require_lowercase = false,
+        require_number = false,
+        require_special = false,
+        disallowed_characters = "",
+      }
+    }
+  }
+
+  push_options(selection, password_options)
+
+  display_value(selection)
+  table.insert(self.selections, selection)
+
+  return selection
+end
+
+
+
+--- Adds a file path input to the menu. Selecting it will open a file explorer.
+---@param i_label string The internal label for the selection. This label is meant for identifying the selection programmatically, and should be something easy to code around.
+---@param display_label string|fun(self: TampererSelection): string The displayed label for the selection, or a function that returns it based off of the current state.
+---@param description string|fun(self: TampererSelection): string The description for the selection, or a function that returns it based off of the current state.
+---@param value string? The initial file path. Setting to `nil` will default to "" (root).
+---@return TampererSelection.File selection The newly added selection.
+function Tamperer:add_file(i_label, display_label, description, value)
+  expect(1, i_label, "string")
+  expect(2, display_label, "string", "function")
+  expect(3, description, "string", "function")
+  expect(4, value, "string", "nil")
+
+  ---@type TampererSelection.File
+  local selection = {
+    type = "file",
+    i_label = i_label,
+    label = display_label,
+    description = description,
+    value = value or "",
+    display_value = "",
+  }
+  display_value(selection)
+  table.insert(self.selections, selection)
+
+  return selection
+end
+
+
+
+--- Adds a color input to the menu. Selecting it will prompt the user to enter a color value via its integer value or its name.
+---@param i_label string The internal label for the selection. This label is meant for identifying the selection programmatically, and should be something easy to code around.
+---@param display_label string|fun(self: TampererSelection): string The displayed label for the selection, or a function that returns it based off of the current state.
+---@param description string|fun(self: TampererSelection): string The description for the selection, or a function that returns it based off of the current state.
+---@param value integer? The initial color value. Setting to `nil` will default to `0` (black).
+---@return TampererSelection.Color selection The newly added selection.
+function Tamperer:add_color(i_label, display_label, description, value)
+  expect(1, i_label, "string")
+  expect(2, display_label, "string", "function")
+  expect(3, description, "string", "function")
+  expect(4, value, "number", "nil")
+
+  ---@type TampererSelection.Color
+  local selection = {
+    type = "color",
+    i_label = i_label,
+    label = display_label,
+    description = description,
+    value = value or colors.black,
+    display_value = "",
+  }
+  display_value(selection)
+  table.insert(self.selections, selection)
+
+  return selection
+end
+
+
+
+--- Adds an exit option to the menu. Selecting it will exit the menu. If this is a submenu, it will return to the parent menu.
+---@param i_label string The internal label for the selection. This label is meant for identifying the selection programmatically, and should be something easy to code around.
+---@param display_label string|fun(self: TampererSelection): string The displayed label for the selection, or a function that returns it based off of the current state.
+---@param description string|fun(self: TampererSelection): string The description for the selection, or a function that returns it based off of the current state.
+---@return TampererSelection.Exit selection The newly added selection.
+function Tamperer:add_exit(i_label, display_label, description)
+  expect(1, i_label, "string")
+  expect(2, display_label, "string", "function")
+  expect(3, description, "string", "function")
+
+  ---@type TampererSelection.Exit
+  local selection = {
+    type = "exit",
+    i_label = i_label,
+    label = display_label,
+    description = description,
+    display_value = "",
   }
   display_value(selection)
   table.insert(self.selections, selection)
