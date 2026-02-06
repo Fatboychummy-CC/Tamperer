@@ -228,7 +228,7 @@ local function get(...)
     local paste_file, paste = remote:match("^paste:(.-):(.+)$")
     local local_file, remote_file = remote:match("^L:(.-):(.+)$")
     local command = remote:match("^C:(.+)$")
-    local remote_installer, path = remote:match("^I:(.-):(.-)$")
+    local remote_installer, path = remote:match("^I:(.+):(.-)$")
     local use_libraries = true
 
     if not local_file then
