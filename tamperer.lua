@@ -1628,6 +1628,22 @@ end
 
 
 
+--- Removes a selection from the menu.
+--- If the selection does not exist, this does nothing. This is not an error.
+---@param i_label string The internal label of the selection to remove.
+function Tamperer:remove(i_label)
+  expect(1, i_label, "string")
+
+  for i, selection in ipairs(self.selections) do
+    if selection.i_label == i_label then
+      table.remove(self.selections, i)
+      return
+    end
+  end
+end
+
+
+
 --- Sets the callback for when an option is changed.
 ---@param callback fun(self: Tamperer, selection: TampererSelection) The callback function.
 ---@return self self For method chaining.
