@@ -12,6 +12,8 @@ local PBKDF2_SALT_LENGTH = 16
 local TAMPERER_TEMP_DIR = "/.tamperer_tmp/"
 
 
+---@alias TampererStringGetter fun(self: TampererSelection): string
+
 ---@class TampererOptions The built version of the menu options.
 ---@field title string The title of the menu.
 ---@field description string A short description displayed below the title.
@@ -36,25 +38,25 @@ local TAMPERER_TEMP_DIR = "/.tamperer_tmp/"
 
 
 
----@class OverrideTampererOptions The user-facing options for the menu, not all need to be specified.
+---@class TampererOptionsOverrides The user-facing options for the menu, not all need to be specified.
 ---@field title string The title of the menu.
 ---@field description string? A short description displayed below the title.
----@field colors OverrideTampererColors? Custom colors for the menu.
+---@field colors TampererColorsOverrides? Custom colors for the menu.
 
----@class OverrideTampererColors
----@field title OverrideTampererGenericOptionColors? The colors for the title.
----@field description OverrideTampererGenericOptionColors? The colors for the description.
----@field selection_arrow OverrideTampererGenericOptionColors? The colors for the selection arrow.
----@field arrows_on OverrideTampererGenericOptionColors? The colors for the scroll arrows, when enabled.
----@field arrows_off OverrideTampererGenericOptionColors? The colors for the scroll arrows, when disabled.
----@field selected OverrideTampererGenericOptionColors? The colors for selected options.
----@field unselected OverrideTampererGenericOptionColors? The colors for unselected options.
----@field selection_description OverrideTampererGenericOptionColors? The colors for the selection description.
----@field popup_border OverrideTampererGenericOptionColors? The colors for borders of popups.
+---@class TampererColorsOverrides
+---@field title TampererGenericOptionColorsOverrides? The colors for the title.
+---@field description TampererGenericOptionColorsOverrides? The colors for the description.
+---@field selection_arrow TampererGenericOptionColorsOverrides? The colors for the selection arrow.
+---@field arrows_on TampererGenericOptionColorsOverrides? The colors for the scroll arrows, when enabled.
+---@field arrows_off TampererGenericOptionColorsOverrides? The colors for the scroll arrows, when disabled.
+---@field selected TampererGenericOptionColorsOverrides? The colors for selected options.
+---@field unselected TampererGenericOptionColorsOverrides? The colors for unselected options.
+---@field selection_description TampererGenericOptionColorsOverrides? The colors for the selection description.
+---@field popup_border TampererGenericOptionColorsOverrides? The colors for borders of popups.
 ---@field body_bg number? The background color for the body of the menu.
----@field tree_view_deeper OverrideTampererGenericOptionColors? The colors for the "go deeper" indicator in tree views.
+---@field tree_view_deeper TampererGenericOptionColorsOverrides? The colors for the "go deeper" indicator in tree views.
 
----@class OverrideTampererGenericOptionColors
+---@class TampererGenericOptionColorsOverrides
 ---@field fg number? The foreground color.
 ---@field bg number? The background color.
 
@@ -78,8 +80,8 @@ local TAMPERER_TEMP_DIR = "/.tamperer_tmp/"
 
 ---@class TampererSelection
 ---@field i_label string The internal label for the selection. Useful for identifying it.
----@field label string|fun(self: TampererSelection): string The label for the selection, or a function that returns it based off of the current state.
----@field description string|fun(self: TampererSelection): string The description for the selection, or a function that returns it based off of the current state.
+---@field label string|TampererStringGetter The label for the selection, or a function that returns it based off of the current state.
+---@field description string|TampererStringGetter The description for the selection, or a function that returns it based off of the current state.
 ---@field type TampererTypes The type of the selection.
 ---@field value any The current value of the selection.
 ---@field display_value string The serialized value of the selection, for display purposes.
@@ -113,9 +115,13 @@ local TAMPERER_TEMP_DIR = "/.tamperer_tmp/"
 ---@field type "submenu"
 ---@field value Tamperer The submenu to open when selected.
 
+---@class TampererSelection.Password.Hashed
+---@field hash string The hashed password.
+---@field salt string The salt used in hashing.
+
 ---@class TampererSelection.Password : TampererSelection
 ---@field type "password"
----@field value { hash: string, salt: string } The hashed password and salt.
+---@field value TampererSelection.Password.Hashed The hashed password and salt.
 ---@field password_options TampererPasswordOptionsFilled The options used for the password hashing and or requirements.
 
 ---@class TampererSelection.PasswordNoHash : TampererSelection
@@ -125,7 +131,7 @@ local TAMPERER_TEMP_DIR = "/.tamperer_tmp/"
 
 ---@class TampererSelection.PasswordCallback : TampererSelection
 ---@field type "passwordcallback"
----@field value { hash: string, salt: string } The hashed password and salt to use for verification.
+---@field value TampererSelection.Password.Hashed The hashed password and salt to use for verification.
 ---@field callback fun() The callback to execute when the correct password is entered.
 ---@field password_options TampererPasswordOptionsFilled The options used for the password hashing and or requirements.
 
@@ -327,7 +333,7 @@ mm_mt.__index = Tamperer
 
 
 --- Create a new Tamperer.
----@param options OverrideTampererOptions The options for the menu.
+---@param options TampererOptionsOverrides The options for the menu.
 ---@return Tamperer menu The created menu.
 function Tamperer.new(options)
   local self = setmetatable({
@@ -1234,8 +1240,8 @@ end
 
 --- Adds a number input to the menu.
 ---@param i_label string The internal label for the selection. This label is meant for identifying the selection programmatically, and should be something easy to code around.
----@param display_label string|fun(self: TampererSelection): string The displayed label for the selection, or a function that returns it based off of the current state.
----@param description string|fun(self: TampererSelection): string The description for the selection, or a function that returns it based off of the current state.
+---@param display_label string|TampererStringGetter The displayed label for the selection, or a function that returns it based off of the current state.
+---@param description string|TampererStringGetter The description for the selection, or a function that returns it based off of the current state.
 ---@param value number? The initial value of the selection. Setting to `nil` will default to 0.
 ---@param minimum number? The minimum allowed value.
 ---@param maximum number? The maximum allowed value.
@@ -1266,8 +1272,8 @@ end
 
 --- Adds a string input to the menu.
 ---@param i_label string The internal label for the selection. This label is meant for identifying the selection programmatically, and should be something easy to code around.
----@param display_label string|fun(self: TampererSelection): string The displayed label for the selection, or a function that returns it based off of the current state.
----@param description string|fun(self: TampererSelection): string The description for the selection, or a function that returns it based off of the current state.
+---@param display_label string|TampererStringGetter The displayed label for the selection, or a function that returns it based off of the current state.
+---@param description string|TampererStringGetter The description for the selection, or a function that returns it based off of the current state.
 ---@param value string? The initial value of the selection. Setting to `nil` will default to "".
 ---@param long boolean? Whether this is a "long string" input. Opens up an `edit` session when selected. Defaults to false.
 ---@param minimum_length number? The minimum allowed length of the string.
@@ -1301,8 +1307,8 @@ end
 
 --- Adds a boolean (true/false) toggle to the menu.
 ---@param i_label string The internal label for the selection. This label is meant for identifying the selection programmatically, and should be something easy to code around.
----@param display_label string|fun(self: TampererSelection): string The displayed label for the selection, or a function that returns it based off of the current state.
----@param description string|fun(self: TampererSelection): string The description for the selection, or a function that returns it based off of the current state.
+---@param display_label string|TampererStringGetter The displayed label for the selection, or a function that returns it based off of the current state.
+---@param description string|TampererStringGetter The description for the selection, or a function that returns it based off of the current state.
 ---@param value boolean? The initial value of the selection. Setting to `nil` will default to false.
 ---@return TampererSelection.Boolean selection The newly added selection.
 function Tamperer:add_boolean(i_label, display_label, description, value)
@@ -1330,8 +1336,8 @@ end
 
 --- Adds a list option to the menu. Selecting it prompts the user to select from a list of options.
 ---@param i_label string The internal label for the selection. This label is meant for identifying the selection programmatically, and should be something easy to code around.
----@param display_label string|fun(self: TampererSelection): string The displayed label for the selection, or a function that returns it based off of the current state.
----@param description string|fun(self: TampererSelection): string The description for the selection, or a function that returns it based off of the current state.
+---@param display_label string|TampererStringGetter The displayed label for the selection, or a function that returns it based off of the current state.
+---@param description string|TampererStringGetter The description for the selection, or a function that returns it based off of the current state.
 ---@param options string[] The list of options.
 ---@param value integer? The initial index of the selection. Setting to `nil` will default to 1.
 ---@return TampererSelection.List selection The newly added selection.
@@ -1371,8 +1377,8 @@ end
 
 --- Adds a callback to the menu. Selecting it will run the given callback function.
 ---@param i_label string The internal label for the selection. This label is meant for identifying the selection programmatically, and should be something easy to code around.
----@param display_label string|fun(self: TampererSelection): string The displayed label for the selection, or a function that returns it based off of the current state.
----@param description string|fun(self: TampererSelection): string The description for the selection, or a function that returns it based off of the current state.
+---@param display_label string|TampererStringGetter The displayed label for the selection, or a function that returns it based off of the current state.
+---@param description string|TampererStringGetter The description for the selection, or a function that returns it based off of the current state.
 ---@param callback fun(self: Tamperer, selection: TampererSelection) The callback function to run when selected.
 ---@return TampererSelection.Callback selection The newly added selection.
 function Tamperer:add_callback(i_label, display_label, description, callback)
@@ -1400,8 +1406,8 @@ end
 
 --- Adds a submenu to the menu. Selecting it will call `:run()` on the given submenu.
 ---@param i_label string The internal label for the selection. This label is meant for identifying the selection programmatically, and should be something easy to code around.
----@param display_label string|fun(self: TampererSelection): string The displayed label for the selection, or a function that returns it based off of the current state.
----@param description string|fun(self: TampererSelection): string The description for the selection, or a function that returns it based off of the current state.
+---@param display_label string|TampererStringGetter The displayed label for the selection, or a function that returns it based off of the current state.
+---@param description string|TampererStringGetter The description for the selection, or a function that returns it based off of the current state.
 ---@param submenu Tamperer The submenu instance.
 ---@return TampererSelection.Submenu selection The newly added selection.
 function Tamperer:add_submenu(i_label, display_label, description, submenu)
@@ -1451,8 +1457,8 @@ end
 --- If `no_hash` is true, the password will be stored in plaintext (not recommended), and only requested once.
 --- If `no_hash` is false or nil, the password will be hashed using PBKDF2, and requested twice for confirmation.
 ---@param i_label string The internal label for the selection. This label is meant for identifying the selection programmatically, and should be something easy to code around.
----@param display_label string|fun(self: TampererSelection): string The displayed label for the selection, or a function that returns it based off of the current state.
----@param description string|fun(self: TampererSelection): string The description for the selection, or a function that returns it based off of the current state.
+---@param display_label string|TampererStringGetter The displayed label for the selection, or a function that returns it based off of the current state.
+---@param description string|TampererStringGetter The description for the selection, or a function that returns it based off of the current state.
 ---@param no_hash boolean? Whether to store the password without hashing it. Defaults to false.
 ---@param password_options TampererPasswordOptions? Options for PBKDF2 hashing.
 ---@return TampererSelection.Password|TampererSelection.PasswordNoHash selection The newly added selection.
@@ -1498,8 +1504,8 @@ end
 
 --- Adds a callback that requires the user to enter a correct password before executing.
 ---@param i_label string The internal label for the selection. This label is meant for identifying the selection programmatically, and should be something easy to code around.
----@param display_label string|fun(self: TampererSelection): string The displayed label for the selection, or a function that returns it based off of the current state.
----@param description string|fun(self: TampererSelection): string The description for the selection, or a function that returns it based off of the current state.
+---@param display_label string|TampererStringGetter The displayed label for the selection, or a function that returns it based off of the current state.
+---@param description string|TampererStringGetter The description for the selection, or a function that returns it based off of the current state.
 ---@param callback fun(self: Tamperer) The callback function to run when the password is correct.
 ---@param password_options TampererPasswordOptions? The PBKDF2 options to use.
 ---@return TampererSelection.PasswordCallback selection The newly added selection.
@@ -1546,8 +1552,8 @@ end
 
 --- Adds a file path input to the menu. Selecting it will open a file explorer.
 ---@param i_label string The internal label for the selection. This label is meant for identifying the selection programmatically, and should be something easy to code around.
----@param display_label string|fun(self: TampererSelection): string The displayed label for the selection, or a function that returns it based off of the current state.
----@param description string|fun(self: TampererSelection): string The description for the selection, or a function that returns it based off of the current state.
+---@param display_label string|TampererStringGetter The displayed label for the selection, or a function that returns it based off of the current state.
+---@param description string|TampererStringGetter The description for the selection, or a function that returns it based off of the current state.
 ---@param value string? The initial file path. Setting to `nil` will default to "" (root).
 ---@return TampererSelection.File selection The newly added selection.
 function Tamperer:add_file(i_label, display_label, description, value)
@@ -1575,8 +1581,8 @@ end
 
 --- Adds a color input to the menu. Selecting it will prompt the user to enter a color value via its integer value or its name.
 ---@param i_label string The internal label for the selection. This label is meant for identifying the selection programmatically, and should be something easy to code around.
----@param display_label string|fun(self: TampererSelection): string The displayed label for the selection, or a function that returns it based off of the current state.
----@param description string|fun(self: TampererSelection): string The description for the selection, or a function that returns it based off of the current state.
+---@param display_label string|TampererStringGetter The displayed label for the selection, or a function that returns it based off of the current state.
+---@param description string|TampererStringGetter The description for the selection, or a function that returns it based off of the current state.
 ---@param value integer? The initial color value. Setting to `nil` will default to `0` (black).
 ---@return TampererSelection.Color selection The newly added selection.
 function Tamperer:add_color(i_label, display_label, description, value)
@@ -1604,8 +1610,8 @@ end
 
 --- Adds an exit option to the menu. Selecting it will exit the menu. If this is a submenu, it will return to the parent menu.
 ---@param i_label string The internal label for the selection. This label is meant for identifying the selection programmatically, and should be something easy to code around.
----@param display_label string|fun(self: TampererSelection): string The displayed label for the selection, or a function that returns it based off of the current state.
----@param description string|fun(self: TampererSelection): string The description for the selection, or a function that returns it based off of the current state.
+---@param display_label string|TampererStringGetter The displayed label for the selection, or a function that returns it based off of the current state.
+---@param description string|TampererStringGetter The description for the selection, or a function that returns it based off of the current state.
 ---@return TampererSelection.Exit selection The newly added selection.
 function Tamperer:add_exit(i_label, display_label, description)
   expect(1, i_label, "string")
