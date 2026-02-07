@@ -5,7 +5,7 @@ local to_get = {
   "I:https://raw.githubusercontent.com/Fatboychummy-CC/etc-programs/refs/heads/main/installers/ccryptolib.lua:",
 }
 local program_name = "Tamperer 2.0"
-local pinestore_id = nil -- Set this to the ID of the pinestore project if you wish to note to pinestore that a download has occurred.
+local pinestore_id = 220 -- Set this to the ID of the pinestore project if you wish to note to pinestore that a download has occurred.
 
 
 -- #################
