@@ -2,7 +2,7 @@
 
 local to_get = {
   "extern:tamperer.lua:https://raw.githubusercontent.com/Fatboychummy-CC/Tamperer/refs/heads/better/tamperer.lua",
-  "I:https://raw.githubusercontent.com/Fatboychummy-CC/etc-programs/refs/heads/main/installers/ccryptolib.lua:",
+  "I:https://raw.githubusercontent.com/Fatboychummy-CC/etc-programs/refs/heads/main/installers/ccryptolib.lua::",
 }
 local program_name = "Tamperer 2.0"
 local pinestore_id = 220 -- Set this to the ID of the pinestore project if you wish to note to pinestore that a download has occurred.
@@ -53,7 +53,7 @@ local PINESTORE_ROOT = "https://pinestore.cc/"
 local PINESTORE_PROJECT_ENDPOINT = PINESTORE_ROOT .. "api/project/"
 local PINESTORE_DOWNLOAD_ENDPOINT = PINESTORE_ROOT .. "api/log/download"
 local p_dir
-local dir_argument, force = ...
+local dir_argument, force, diff_force = ...
 if dir_argument then
   p_dir = shell.resolve(dir_argument)
 else
@@ -118,9 +118,15 @@ local function get_version_to_download()
       table.insert(versions, k)
     end
     write("> ")
-    local version = read(nil, nil, function(partial)
-      return completion_choice(partial, versions) --[[@as string[] ]]
-    end)
+    local version
+    if diff_force then
+      version = diff_force
+      print(version)
+    else
+      version = read(nil, nil, function(partial)
+        return completion_choice(partial, versions) --[[@as string[] ]]
+      end)
+    end
     if diffs[version] then
       return version
     else
@@ -228,7 +234,7 @@ local function get(...)
     local paste_file, paste = remote:match("^paste:(.-):(.+)$")
     local local_file, remote_file = remote:match("^L:(.-):(.+)$")
     local command = remote:match("^C:(.+)$")
-    local remote_installer, path = remote:match("^I:(.+):(.-)$")
+    local remote_installer, path, diff = remote:match("^I:(.+):(.-):(.-)$")
     local use_libraries = true
 
     if not local_file then
@@ -261,9 +267,12 @@ local function get(...)
         error(("Failed to download installer from '%s'."):format(remote_installer), 0)
       end
 
+      -- Only provide the diff value if it's not an empty string.
+      if diff == "" then diff = nil end
+
       local func, err = load(installer, "remote-installer", "t", _ENV)
       if func then
-        local ok, err2 = pcall(func, path, "y")
+        local ok, err2 = pcall(func, path, "y", diff)
         if not ok then
           error(("Remote installer from '%s' failed: %s"):format(remote_installer, err2), 0)
         end
