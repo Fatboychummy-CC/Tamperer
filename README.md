@@ -35,7 +35,7 @@ wget run https://raw.githubusercontent.com/Fatboychummy-CC/etc-programs/refs/hea
 ```
 
 ## Usage
-To use Tamperer in your ComputerCraft program, simply require the
+To use Tamperer in your program, simply require the
 `tamperer` module and create a new menu instance. You can then add settings
 to the menu and display it to the user.
 
