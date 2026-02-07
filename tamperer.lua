@@ -1650,6 +1650,21 @@ end
 
 
 
+--- Get a selection from the menu.
+---@param i_label string The internal label of the selection to get.
+---@return TampererSelection? selection The selection with the given internal label, or `nil` if it does not exist.
+function Tamperer:get_selection(i_label)
+  expect(1, i_label, "string")
+
+  for i, selection in ipairs(self.selections) do
+    if selection.i_label == i_label then
+      return selection
+    end
+  end
+end
+
+
+
 --- Sets the callback for when an option is changed.
 ---@param callback fun(self: Tamperer, selection: TampererSelection) The callback function.
 ---@return self self For method chaining.
