@@ -58,7 +58,7 @@ end)
 menu:run()
 ```
 
-A wiki is under construction to provide more detailed documentation and
-examples, but in the meantime, all methods and options are documented in the
-`tamperer.lua` file itself. If you are using the Lua Language Server, you
-should be able to see the documentation as you type.
+See the [wiki](https://github.com/Fatboychummy-CC/Tamperer/wiki/) for detailed
+documentation and guides on using Tamperer. The wiki is still under construction,
+but contains a full reference page for all Tamperer methods and objects.
+
