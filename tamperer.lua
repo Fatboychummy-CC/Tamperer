@@ -114,6 +114,7 @@ local TAMPERER_TEMP_DIR = "/.tamperer_tmp/"
 ---@class TampererSelection.Submenu : TampererSelection
 ---@field type "submenu"
 ---@field value Tamperer The submenu to open when selected.
+---@field opened boolean Whether the submenu is currently opened.
 
 ---@class TampererSelection.Password.Hashed
 ---@field hash string The hashed password.
@@ -1154,8 +1155,12 @@ function Tamperer:select()
     return false
   elseif selected.type == "submenu" then
     ---@cast selected TampererSelection.Submenu
+    selected.opened = true
+    if self.on_change then
+      self:on_change(selected)
+    end
     selected.value:run()
-    return false
+    selected.opened = false
   elseif selected.type == "exit" then
     ---@cast selected TampererSelection.Exit
     -- Exit the current menu. This is handled by returning early and not calling on_change.
@@ -1424,6 +1429,7 @@ function Tamperer:add_submenu(i_label, display_label, description, submenu)
     description = description,
     value = submenu,
     display_value = "",
+    opened = false,
   }
   display_value(selection)
   table.insert(self.selections, selection)
