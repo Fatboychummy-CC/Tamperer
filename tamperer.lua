@@ -1154,7 +1154,9 @@ function Tamperer:select()
   elseif selected.type == "callback" then
     ---@cast selected TampererSelection.Callback
     selected.value(self, selected)
-    self:on_change(selected)
+    if self.on_change then
+      self:on_change(selected)
+    end
     return false
   elseif selected.type == "submenu" then
     ---@cast selected TampererSelection.Submenu
