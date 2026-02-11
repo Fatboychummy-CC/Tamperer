@@ -1246,6 +1246,7 @@ function Tamperer:run()
 
   self.state.selected_index = 1
   self.state.scroll_offset = 0
+  self.running = true
   while self.running do
     self:draw()
     local _, key = os.pullEvent("key")
