@@ -327,6 +327,7 @@ end
 ---@field selections TampererSelection[] The selections in the menu.
 ---@field state TampererState The current state data of the menu.
 ---@field on_change fun(self: Tamperer, selection: TampererSelection)? The callback for when an option is changed.
+---@field running boolean Whether the menu is currently running.
 local Tamperer = {}
 
 local mm_mt = {}
@@ -341,6 +342,7 @@ function Tamperer.new(options)
     options = {},
     selections = {},
     state = {selected_index = 1, scroll_offset = 0},
+    running = false,
   }, mm_mt)
 
   expect(1, options, "table")
@@ -1178,6 +1180,17 @@ end
 
 
 
+--- Kills the active menu.
+function Tamperer:kill()
+  self.running = false
+
+  -- Queue a random key event to ensure the runner updates.
+  -- Key 't' chosen by google random number generator
+  os.queueEvent("key", keys.t)
+end
+
+
+
 --- Runs the menu.
 function Tamperer:run()
   if #self.selections == 0 then
@@ -1230,7 +1243,7 @@ function Tamperer:run()
 
   self.state.selected_index = 1
   self.state.scroll_offset = 0
-  while true do
+  while self.running do
     self:draw()
     local _, key = os.pullEvent("key")
     if key_callbacks[key] then
@@ -1677,6 +1690,24 @@ end
 function Tamperer:set_on_change(callback)
   expect(1, callback, "function")
   self.on_change = callback
+  return self
+end
+
+
+
+--- Sets the callback for when an option is changed recursively (applies to submenus).
+---@param callback fun(self: Tamperer, selection: TampererSelection) The callback function.
+---@return self self For method chaining.
+function Tamperer:set_on_change_recursive(callback)
+  expect(1, callback, "function")
+  self.on_change = callback
+
+  for _, selection in ipairs(self.selections) do
+    if selection.type == "submenu" then
+      selection.value:set_on_change_recursive(callback)
+    end
+  end
+
   return self
 end
 
