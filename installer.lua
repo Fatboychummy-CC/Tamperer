@@ -32,7 +32,7 @@ local diffs = {
     "all",
   },
   no_ccryptolib = {
-    "1",
+    "+1",
   },
 }
 --[[
