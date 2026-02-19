@@ -589,10 +589,10 @@ local function read_string(self, selection)
     term.setTextColor(colors.white)
     out = read(nil, nil, nil, selection.value) --[[@as string]]
 
-    if #out < selection.minimum_length then
+    if #out < (selection.minimum_length or 0) then
       flash(x, y, ("Minimum length: %d"):format(selection.minimum_length), colors.red)
       out = nil
-    elseif #out > selection.maximum_length then
+    elseif #out > (selection.maximum_length or math.huge) then
       flash(x, y, ("Maximum length: %d"):format(selection.maximum_length), colors.red)
       out = nil
     end
@@ -657,10 +657,10 @@ local function read_longstring(self, selection)
     file.close()
 
     self:draw()
-    if #content < selection.minimum_length then
+    if #content < (selection.minimum_length or 0) then
       flash(x, y, ("Minimum length: %d"):format(selection.minimum_length), colors.red)
       content = nil
-    elseif #content > selection.maximum_length then
+    elseif #content > (selection.maximum_length or math.huge) then
       flash(x, y, ("Maximum length: %d"):format(selection.maximum_length), colors.red)
       content = nil
     end
@@ -694,10 +694,10 @@ local function raw_password(self, password_options, confirm)
   repeat
     password = read('\xb7') --[[@as string]]
 
-    if #password < password_options.requirements.min_length then
+    if #password < (password_options.requirements.min_length or 0) then
       flash(x, y, ("Minimum length: %d"):format(password_options.requirements.min_length), colors.red)
       password = nil
-    elseif #password > password_options.requirements.max_length then
+    elseif #password > (password_options.requirements.max_length or math.huge) then
       flash(x, y, ("Maximum length: %d"):format(password_options.requirements.max_length), colors.red)
       password = nil
     elseif password_options.requirements.require_uppercase and not password:find("%u") then
