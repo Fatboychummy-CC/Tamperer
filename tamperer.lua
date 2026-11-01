@@ -1673,6 +1673,13 @@ end
 
 
 
+--- Wipes the menu of all selections.
+function Tamperer:clear()
+  self.selections = {}
+end
+
+
+
 --- Get a selection from the menu.
 ---@param i_label string The internal label of the selection to get.
 ---@return TampererSelection? selection The selection with the given internal label, or `nil` if it does not exist.
