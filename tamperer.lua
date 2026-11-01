@@ -115,6 +115,7 @@ local TAMPERER_TEMP_DIR = "/.tamperer_tmp/"
 ---@field type "submenu"
 ---@field value Tamperer The submenu to open when selected.
 ---@field opened boolean Whether the submenu is currently opened.
+---@field precallback fun(self: Tamperer, selection: TampererSelection.Submenu)? A function to run before the submenu is opened. This can be used to update or populate the submenu.
 
 ---@class TampererSelection.Password.Hashed
 ---@field hash string The hashed password.
@@ -1164,6 +1165,11 @@ function Tamperer:select()
     if self.on_change then
       self:on_change(selected)
     end
+
+    if selected.precallback then
+      selected.precallback(selected.value, selected)
+    end
+
     selected.value:run()
     selected.opened = false
   elseif selected.type == "exit" then
@@ -1431,12 +1437,14 @@ end
 ---@param display_label string|TampererStringGetter The displayed label for the selection, or a function that returns it based off of the current state.
 ---@param description string|TampererStringGetter The description for the selection, or a function that returns it based off of the current state.
 ---@param submenu Tamperer The submenu instance.
+---@param precallback fun(self: Tamperer, selection: TampererSelection.Submenu)? A function to run before the submenu is opened. This can be used to update or populate the submenu.
 ---@return TampererSelection.Submenu selection The newly added selection.
-function Tamperer:add_submenu(i_label, display_label, description, submenu)
+function Tamperer:add_submenu(i_label, display_label, description, submenu, precallback)
   expect(1, i_label, "string")
   expect(2, display_label, "string", "function")
   expect(3, description, "string", "function")
   expect(4, submenu, "table")
+  expect(5, precallback, "function", "nil")
 
   ---@type TampererSelection.Submenu
   local selection = {
@@ -1447,6 +1455,7 @@ function Tamperer:add_submenu(i_label, display_label, description, submenu)
     value = submenu,
     display_value = "",
     opened = false,
+    precallback = precallback,
   }
   display_value(selection)
   table.insert(self.selections, selection)
