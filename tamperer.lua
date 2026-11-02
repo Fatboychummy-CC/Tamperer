@@ -415,6 +415,16 @@ function Tamperer:draw()
   -- Draw the current selection description, max height - 1 (title) - 2 (description) - 4 (selection description) - 2 (scroll arrows)
   -- Pull the description, if needed
   local selected = self.selections[self.state.selected_index + self.state.scroll_offset]
+  while not selected do
+    if self.state.scroll_offset > 0 then
+      self.state.scroll_offset = math.max(0, self.state.scroll_offset - 1)
+    else
+      self.state.selected_index = math.max(1, self.state.selected_index - 1)
+    end
+
+    selected = self.selections[self.state.selected_index + self.state.scroll_offset]
+  end
+
   local description
   if type(selected.description) == "function" then
     description = selected:description()
