@@ -31,6 +31,8 @@ local TAMPERER_TEMP_DIR = "/.tamperer_tmp/"
 ---@field popup_border TampererGenericOptionColors The colors for borders of popups.
 ---@field body_bg number The background color for the body of the menu.
 ---@field tree_view_deeper TampererGenericOptionColors The colors for the "go deeper" indicator in tree views.
+---@field read_string TampererGenericOptionColors The colors for the read string input field.
+---@field warning TampererGenericOptionColors The colors for warning messages.
 
 ---@class TampererGenericOptionColors
 ---@field fg number The foreground color.
@@ -55,6 +57,8 @@ local TAMPERER_TEMP_DIR = "/.tamperer_tmp/"
 ---@field popup_border TampererGenericOptionColorsOverrides? The colors for borders of popups.
 ---@field body_bg number? The background color for the body of the menu.
 ---@field tree_view_deeper TampererGenericOptionColorsOverrides? The colors for the "go deeper" indicator in tree views.
+---@field read_string TampererGenericOptionColorsOverrides? The colors for the read string input field.
+---@field warning TampererGenericOptionColorsOverrides? The colors for warning messages.
 
 ---@class TampererGenericOptionColorsOverrides
 ---@field fg number? The foreground color.
@@ -205,6 +209,8 @@ local default_colors = {
   popup_border = { fg = colors.yellow, bg = colors.black },
   body_bg = colors.black,
   tree_view_deeper = { fg = colors.green, bg = colors.black },
+  read_string = { fg = colors.white, bg = colors.black },
+  warning = { fg = colors.yellow, bg = colors.black },
 }
 
 local color_lookup = {}
@@ -587,7 +593,8 @@ local function read_string(self, selection)
   local out
 
   repeat
-    term.setTextColor(colors.white)
+    term.setTextColor(self.options.colors.read_string.fg)
+    term.setBackgroundColor(self.options.colors.read_string.bg)
     out = read(nil, nil, nil, selection.value) --[[@as string]]
 
     if #out < (selection.minimum_length or 0) then
@@ -688,7 +695,7 @@ local function raw_password(self, password_options, confirm)
   expect(2, password_options, "table")
   if not password_options.requirements.min_length then error("Here!", 3) end
   local x, y = term.getCursorPos()
-  term.setTextColor(colors.yellow)
+  term.setTextColor(self.options.colors.warning.fg)
   flash(x, y, confirm and "Confirm password" or "Enter password", colors.yellow)
 
   local password
