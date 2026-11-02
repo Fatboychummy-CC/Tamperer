@@ -433,9 +433,7 @@ function Tamperer:draw()
   end
 
   -- Draw the options in the body.
-  -- 4 options drawn at a time.
   for i = 1, max_selections do
-    -- for y = 5, 8 do
     local y = i + 4
     local selection = self.selections[y - 4 + self.state.scroll_offset]
     if not selection then break end -- No more selections to draw.
@@ -1203,6 +1201,67 @@ function Tamperer:kill()
   -- Queue a random key event to ensure the runner updates.
   -- Key 't' chosen by google random number generator
   os.queueEvent("key", keys.t)
+end
+
+
+
+--- Flashes one of the selections in the menu. This is useful for drawing attention to a specific selection.
+---@param i_label string The internal label of the selection to flash.
+---@param fg_color number The foreground color to flash the selection with.
+---@param bg_color number The background color to flash the selection with.
+---@param duration number The duration to flash the selection for, in seconds.
+---@param rep integer The amount of times to repeat. Repeats the same duration each time.
+function Tamperer:flash_selection(i_label, fg_color, bg_color, duration, rep)
+  expect(1, i_label, "string")
+  expect(2, fg_color, "number")
+  expect(3, bg_color, "number")
+  expect(4, duration, "number")
+
+  self:draw() -- Ensure the menu is fresh.
+
+  local w, h = term.getSize()
+  local midpoint = math.ceil(w * 0.38)
+  local max_label_length = midpoint - 3
+
+  local selection
+  local index
+  for i, sel in ipairs(self.selections) do
+    if sel.i_label == i_label then
+      index = i
+      selection = sel
+      break
+    end
+  end
+
+  -- Determine the y position of the selection.
+  local y = index - self.state.scroll_offset + 4
+  if y < 5 then
+    -- Selection is not visible, so we can't flash it.
+    return
+  end
+
+
+  for i = 1, rep * 2 - 1 do
+    -- Draw the label
+    term.setBackgroundColor(i % 2 == 1 and bg_color or self.options.colors.unselected.bg)
+    term.setTextColor(i % 2 == 1 and fg_color or self.options.colors.unselected.fg)
+    term.setCursorPos(2, y)
+    local label
+    if type(selection.label) == "function" then
+      label = selection:label()
+    else
+      label = selection.label
+    end
+
+    term.write(label:sub(1, max_label_length))
+
+    -- Draw the value
+    display_value(selection)
+    term.setCursorPos(midpoint, y)
+    term.write(selection.display_value:sub(1, w - midpoint - 1))
+
+    sleep(duration)
+  end
 end
 
 
